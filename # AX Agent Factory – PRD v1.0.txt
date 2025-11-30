@@ -1,0 +1,498 @@
+# AX Agent Factory – PRD v1.0
+
+> 버전: v1.0
+> 작성일: 2025-11-30
+> 작성자: [작성자 이름]
+> 대상: AX 팀(기획/컨설턴트/개발/프롬프트 엔지니어)
+
+---
+
+## 1. Product Overview
+
+### 1.1 제품 명(가칭)
+
+* **AX Agent Factory**
+  (부제: Job2Agent Studio)
+
+### 1.2 한 줄 정의
+
+> **회사명 + 직무명**만 입력하면,
+> 웹 리서치 → 직무 분석(IVC/DNA) → 워크플로우 설계 → 에이전트 아키텍처 → 에이전트 명세 →
+> 스킬/암묵지 Deep Research → 스킬이 주입된 프롬프트 → 샘플 실행까지
+> 한 번에 생성해주는 **Streamlit 기반 “직무→에이전트 팩토리”**.
+
+### 1.3 배경 / 문제 정의
+
+* 현재 Day1/AX 팀은 새로운 직무나 프로젝트마다:
+
+  * 직무 분석(업무 쪼개기)
+  * IVC/DNA/Workflow 설계
+  * AX 아키텍처(어떤 에이전트가 어떤 일을 할지)
+  * 에이전트 프롬프트 설계
+  * 샘플 실행/평가
+    를 **매번 수작업으로, 사람 머리로** 한다.
+* 지금 가지고 있는 프롬프트들(IVC, 정적분류, WF Architect, Agent Architect, Prompt Builder 등)은
+  이미 GPTs/Gems에서 **성능은 잘 나오지만 “하나씩 따로”** 돌아간다.
+* 문제:
+
+  * 프롬프트끼리 **입·출력 형식이 일관되지 않아서** 파이프라인화가 어렵다.
+  * 직무/에이전트가 바뀔 때마다 **같은 사고 과정을 사람 머리로 반복**해야 한다.
+  * “에이전트가 어떤 스킬/프레임워크/암묵지에 기반해서 일하는지”가 문서화되어 있지 않다.
+
+### 1.4 제품 목표
+
+1. **직무 → 에이전트 팀 설계** 전체 과정을 하나의 파이프라인으로 자동화
+2. 직무별 **Task/Workflow/Agent/Skill/Prompt**를
+   재사용 가능한 구조화 자산(JSON/테이블)로 축적
+3. “시니어 한 명”이 가지고 있는 **논리·암묵지·프레임워크·방법론**을
+   **SkillSpec**이라는 텍스트 자산으로 정리하고, 프롬프트에 주입
+
+### 1.5 성공 지표 (v1 기준)
+
+* 새 직무에 대해:
+
+  * End-to-End(0~9 단계) 최초 산출까지 **소요 시간**:
+    기존 사람 수작업 대비 70% 이상 단축
+* 직무 1개 당:
+
+  * 재사용 가능한 에이전트 컴포넌트 수: **최소 5개 이상**
+  * 스킬 Spec(논리/프레임워크) 수: **최소 10개 이상**
+* 골든 케이스 기준:
+
+  * 에이전트 Output가 “시니어가 직접 만든 산출물”과 **체감 품질 80% 이상 유사**
+
+### 1.6 Out of Scope (v1)
+
+* 실제 운영 환경 연동(슬랙/CRM/ERP/사내 시스템 자동화)
+* 멀티 테넌트, 권한 관리, 조직별 워크스페이스
+* 대규모 RAG 인프라(벡터 DB, 하이브리드 검색 등)
+
+---
+
+## 2. Target Users & Use Cases
+
+### 2.1 주요 사용자
+
+1. **내부 AX 팀 (우선 타깃)**
+
+   * B2B AX 컨설턴트, AI PM, 프롬프트 엔지니어, 교육 기획자
+2. **(차후) 외부 파트너 / 고객사 팀장**
+
+   * 자사 직무에 맞는 에이전트 팀을 정의하고 싶은 리더들
+
+### 2.2 대표 Use Case
+
+* **U1 – 새로운 직무에 대한 에이전트 패키지 설계**
+
+  * ex) “대기업 B2B 교육 컨설턴트”, “공정 데이터 분석 파트장”
+  * 이 도구로 처음부터 끝까지 돌려서 “직무 전용 에이전트 팀 + 프롬프트 세트” 확보
+
+* **U2 – 기존 프롬프트/에이전트 리팩토링**
+
+  * 지금 GPTs/Gems에서 잘 돌고 있는 프롬프트들을
+    IVC/DNA/Workflow/Skill 관점에서 쪼개서 **micro-agent 구조**로 재설계
+
+* **U3 – 직무별 Skill/암묵지 라이브러리 축적**
+
+  * 특정 도메인(예: B2B 세일즈, AX 컨설팅, HRD 기획 등)에 대해
+    “시니어의 머리 속에 있던 암묵지”를 SkillSpec으로 쌓아서
+    이후 다른 에이전트/교육/컨설팅에 재사용
+
+---
+
+## 3. 핵심 개념 정의
+
+### 3.1 Job / Role
+
+* 특정 회사 + 특정 직무(예: “A사 B2B 영업 팀장”)
+* 이 제품은 “직무를 이해하고, 그 일을 하는 에이전트 팀을 설계하는 도구”
+
+### 3.2 Task (IVC + DNA)
+
+* IVC로 Phase별 업무 흐름을 분해하고,
+* DNA로 Primitive/Domain/Mechanism 코드가 붙은 **Task Card**
+
+### 3.3 Workflow
+
+* Task Card들을 Stage/Stream/Hub 구조로 연결한 “업무 워크플로우”
+* Mermaid로 시각화 가능
+
+### 3.4 Agent & AgentSpec
+
+* 업무를 대신 수행하는 LLM 에이전트
+* AgentSpec = 에이전트의 **역할/입출력/제약/평가기준**을 정의한 JSON
+
+### 3.5 Skill & SkillSpec (핵심)
+
+* 이 프로젝트에서 스킬이란:
+
+  * **논리(사고 절차)**
+  * **암묵지(휴리스틱, if-then 규칙)**
+  * **프레임워크/모델(2×2, 단계 모델 등)**
+  * **방법론/체크리스트(실행 순서, 점검 항목)**
+    을 **언어로 완전히 표현한 덩어리**
+* SkillSpec:
+
+  * `description`, `mental_model`, `frameworks`, `heuristics`, `checklist`, `examples` 등을 포함한 텍스트 자산
+  * 에이전트 프롬프트의 “뇌 구조” 역할
+
+### 3.6 Micro-Agent
+
+* 하나의 프롬프트/에이전트가 하는 일을 더 잘게 쪼개서,
+* **“생각 한 번 + 결과 한 종류”**만 담당하는 유닛
+
+---
+
+## 4. End-to-End Flow (0~9 단계)
+
+> 이 Flow는 “직무 JD”뿐 아니라 “프롬프트 자체”에도 동일하게 적용 가능
+> (프롬프트를 에이전트의 JD라고 보고 IVC/DNA 돌리는 메타용도)
+
+### 0. Job Research
+
+* Input: 회사명, 직무명 (+ 옵션: 수동 JD 텍스트)
+* Process:
+
+  * Gemini Web Search / JD 크롤링
+  * 여러 소스를 합쳐 직무 설명 텍스트 생성
+* Output:
+
+  * `raw_job_desc`, `research_sources`
+
+### 1. IVC 직무 분석
+
+* Input: `raw_job_desc`
+* Process:
+
+  * IVC-A: Task Extractor – 업무 문장을 Task atom 단위로 쪼갬
+  * IVC-B: Phase Classifier – 각 Task에 P1~P4 + EXECUTE subtype 부여
+  * IVC-C: Formatter – Phase별 JSON 구조로 정리
+* Output:
+
+  * `ivc_tasks` (Phase별 Task 리스트)
+
+### 2. 정적 분류(DNA)
+
+* Input: `ivc_tasks`
+* Process:
+
+  * DNA-A: Primitive/Domain 부여
+  * DNA-B: Mechanism 부여 + Full Code 생성
+* Output:
+
+  * `task_cards` (IVC+DNA 정보가 합쳐진 Task Card 배열)
+
+### 3. Workflow Structuring
+
+* Input: `task_cards`
+* Process:
+
+  * 의존성, 허브, 병렬/합류 식별
+  * Stage/Stream/Task 구조 설계
+* Output:
+
+  * `workflow_structure`, `workflow_explanation`
+
+### 4. Mermaid Visualization
+
+* Input: `workflow_structure`
+* Process:
+
+  * Notion 호환 Mermaid flowchart로 변환
+* Output:
+
+  * `mermaid_code`
+
+### 5. AX Workflow/System Architect
+
+* Input: `job_meta`, `workflow_structure`, `task_cards`
+* Process:
+
+  * Stage별 문제/목표/KPI 정리
+  * Stage마다 Human/LLM/Code/External Tool 역할 분배
+  * 에이전트 후보 도출
+* Output:
+
+  * `AgentTable_for_AgentArchitect` (Stage/Agent/입출력/환경)
+
+### 6. Agent Architect
+
+* Input: `AgentTable_for_AgentArchitect`
+* Process:
+
+  * 각 에이전트에 대해 AgentSpecs_for_PromptBuilder JSON 생성
+* Output:
+
+  * `agent_specs` (AgentSpecs_for_PromptBuilder)
+
+### 7. Skill Planner & Deep-Research  **← 수정된 핵심 순서**
+
+* Input: `agent_specs`, `task_cards`, `job_meta`, `research_sources`
+* Process:
+
+  * Skill Planner:
+
+    * 각 에이전트가 제대로 일하려면 필요한 스킬 이름/타입 리스트업
+  * Skill Deep Research:
+
+    * 각 스킬에 대해 mental_model, frameworks, heuristics, checklist, examples를
+      LLM 심층 리서치로 텍스트화 → SkillSpec 생성
+* Output:
+
+  * `skill_catalog` (직무 전체 스킬 목록)
+  * `agent_skill_specs` (에이전트별 SkillSpec 묶음)
+
+### 8. Prompt-Builder (Skill-injected)
+
+* Input: `agent_specs`, `agent_skill_specs`
+* Process:
+
+  * AgentSpec 기반: Role, Goal, Input/Output Contract, Constraints
+  * SkillSpec 기반: Process(사고 절차), Checklist, 좋은/나쁜 예시
+* Output:
+
+  * `llm_prompts_for_agents`
+    (에이전트별 시스템 프롬프트 + user 템플릿)
+
+### 9. Runner & Evaluation
+
+* Input: `llm_prompts_for_agents`, `AgentSpecs`, (자동 생성 샘플 인풋)
+* Process:
+
+  * 각 에이전트에 대한 샘플 Input 생성
+  * 실제 LLM API 호출 → Output 수집
+  * (선택) Evaluator Agent로 품질 평가/점수화
+* Output:
+
+  * `sample_io` (에이전트별 [input, output] 세트)
+  * `run_logs` (모델/토큰/비용/평가 점수)
+
+---
+
+## 5. 기능 범위 (Scope)
+
+### 5.1 v1 필수 기능 (Must)
+
+* F0: 회사명/직무명 입력 폼 + JD 직접 입력 기능
+* F1: Web Search + JD 합성 모듈
+* F2: IVC-A/B/C 직무 분석 모듈
+* F3: DNA-A/B 정적 분류 모듈
+* F4: 워크플로우 구조 설계 + Mermaid 코드 생성
+* F5: AX Architect 모듈 (AgentTable 생성)
+* F6: Agent Architect 모듈 (AgentSpec JSON 생성)
+* **F7: Skill Planner & Deep-Research 모듈 (SkillSpec 생성)**
+* **F8: Skill-injected Prompt Builder 모듈**
+* F9: Runner 모듈 (샘플 Input 생성 + 실제 LLM 실행)
+* F10: Streamlit UI (각 단계별 결과 확인 및 재실행 버튼)
+
+### 5.2 v1 옵션(있으면 좋음)
+
+* 프롬프트 자체를 입력으로 받아 IVC/DNA 돌리는 **Prompt Decomposer 탭**
+* 간단한 품질 평가(Evaluator Agent) + 레이팅 기능
+* 직무별/에이전트별 실행 로그 대시보드
+
+---
+
+## 6. System Architecture 요약
+
+### 6.1 레이어 구조
+
+1. **UI (Streamlit)**
+
+   * 메인 페이지: 회사/직무 입력 + 전체 파이프라인 실행 버튼
+   * 탭/페이지:
+
+     * IVC / DNA / Workflow / AX & Agents / Skills / Prompts / Runner / Logs
+
+2. **Orchestrator (Python)**
+
+   * `pipeline_manager`:
+
+     * 각 JobRun에 대해 0~9단계 실행/중단/캐싱
+   * Stage별 모듈:
+
+     * `core/research`, `core/ivc`, `core/dna`, `core/workflow`,
+       `core/ax`, `core/agentspec`, `core/skills`, `core/promptbuilder`, `core/runner`
+
+3. **Data/Storage**
+
+   * DB: SQLite (→ 이후 Postgres로 확장 가능)
+   * 주요 테이블:
+
+     * `job_runs`, `ivc_results`, `dna_results`, `workflow_results`,
+       `ax_results`, `agent_specs`, `skill_specs`, `prompt_results`, `agent_runs`
+
+4. **LLM/Integration**
+
+   * LLM 호출 래퍼: `infra/llm_client.py`
+   * 모델 전략:
+
+     * Heavy reasoning: 상위 모델 (IVC-A/B, Workflow, AX, Skill Deep Research, Prompt Builder)
+     * Light classification/formatting: 소형 모델 or 코드 (IVC-C, DNA, Formatter 등)
+
+---
+
+## 7. 데이터 모델 (개념 수준)
+
+### 7.1 주요 엔티티
+
+* **JobRun**
+
+  * 회사명, 직무명, 생성시각
+
+* **JobResearch**
+
+  * JobRun FK
+  * `raw_job_desc`, `sources`
+
+* **IVCResult**
+
+  * JobRun FK
+  * `ivc_tasks`
+
+* **DNAResult**
+
+  * JobRun FK
+  * `task_cards`
+
+* **WorkflowResult**
+
+  * JobRun FK
+  * `workflow_structure`, `mermaid_code`
+
+* **AXResult**
+
+  * JobRun FK
+  * `agent_table`
+
+* **AgentSpecsResult**
+
+  * JobRun FK
+  * `agent_specs`
+
+* **SkillResult**
+
+  * JobRun FK
+  * `skill_catalog`, `agent_skill_specs`
+
+* **PromptResult**
+
+  * JobRun FK
+  * `llm_prompts_for_agents`
+
+* **AgentRun**
+
+  * JobRun FK, Agent ID
+  * 샘플 input/output, 모델 정보, 평가 점수
+
+(상세 필드는 `architecture.md`에서 SQLAlchemy 기준으로 정의)
+
+---
+
+## 8. 비기능 요구사항 (NFR)
+
+### 8.1 성능
+
+* 한 JobRun(직무 1개)에 대해 0~9단계 기본 실행 시간:
+
+  * v1 목표: **5~10분 이내** (모델/토큰 설정에 따라 조정)
+* 각 Stage별 LLM 호출 횟수:
+
+  * 기본 모드: Stage당 1~3회
+
+### 8.2 관측성 / 로깅
+
+* 각 Stage별 입력/출력 JSON을 DB에 모두 저장
+* AgentRun에는:
+
+  * 모델명, 토큰 수, 예상 비용, 실행 시간, 평가 점수 기록
+
+### 8.3 확장성
+
+* 모든 모듈의 입·출력은 JSON 스키마로 고정
+  → 다른 언어/프레임워크(예: FastAPI, LangGraph)로 이식 가능
+* Workflow/Agent/Skill/Prompt 도메인은 직무무관하게 재사용 가능
+
+---
+
+## 9. 개발/운영 전략 (GPT-5 Pro + Codex 활용)
+
+> 이 섹션은 “어떻게 이 제품을 구현할지” 관점의 메모 (내부용)
+
+1. **설계/문서/프롬프트/아키텍처**
+
+   * GPT-5 Pro (또는 GPT-5.1 Thinking)이 담당
+   * 산출물:
+
+     * PRD (이 문서)
+     * `docs/architecture.md`
+     * `docs/prompt_guidelines.md`
+     * 각 Stage별 프롬프트 설계/개선
+
+2. **구현/코드/리팩토링**
+
+   * Codex 계열 / Claude Code 등 **코딩 특화 LLM**이 담당
+   * 입력:
+
+     * 위 설계 문서 + 함수 시그니처 + JSON 스키마
+   * 역할:
+
+     * `core/*` 모듈 구현
+     * 테스트 코드/골든 케이스 작성
+     * 리팩토링 & 버그 픽스
+
+3. **이터레이션 루프**
+
+   * 루프 ①: 직무 모델링
+
+     * 1~3단계(IVC/DNA/Workflow)를 사람 눈으로 검증
+   * 루프 ②: AgentSpec 설계
+
+     * AX/AgentSpec 구조와 직무 현실의 align 여부 확인
+   * 루프 ③: SkillSpec 품질
+
+     * 시니어의 사고 과정이 잘 반영됐는지 검토
+   * 루프 ④: Prompt & 실행 품질
+
+     * 골든 케이스들로 반복 테스트
+   * 루프 ⑤: 제품 UX & 로그 기반 개선
+
+     * 어떤 Stage/Skill/Agent에서 문제가 많이 나는지 보고 우선순위 설정
+
+---
+
+## 10. Roadmap (PoC → v1)
+
+### Phase 0 – 설계 고정 (현재 단계)
+
+* PRD v1.0 작성 (완료)
+* `architecture.md`, `prompt_guidelines.md` 기초 버전 작성 (완료)
+* 앵커 직무 1~2개 선정
+
+  * 예: “대기업 B2B 교육 영업 팀장”, “AX 컨설턴트(본인 역할)”
+
+### Phase 1 – PoC (직무 1개, 0~3단계 중심)
+
+* 기능: 0~3단계(Job Research, IVC, DNA, Workflow) + 기본 UI
+* 목표:
+
+  * TaskCard & Workflow까지 사람이 “충분히 납득”하는 수준
+
+### Phase 2 – Agent & Skill (6~8단계 확장)
+
+* 기능: AX Architect, AgentSpec, Skill Planner & Deep-Research, PromptBuilder
+* 목표:
+
+  * 직무 1개에 대해 **에이전트 팀 + SkillSpec + Prompt**까지 한 번에 생성
+
+### Phase 3 – Runner & 평가 (9단계 + 로그)
+
+* 기능: Runner, 실행 로그, 간단 품질 평가
+* 목표:
+
+  * 골든 케이스 세트 기준 재현성 검증
+
+### Phase 4 – Multi-Job & 리팩토링
+
+* 여러 직무에 대해 반복 적용,
+* 공통/특화 Skill/Agent 템플릿 도출
