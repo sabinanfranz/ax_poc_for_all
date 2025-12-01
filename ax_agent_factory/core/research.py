@@ -24,6 +24,13 @@ def run_job_research(job_run: JobRun, manual_jd_text: Optional[str] = None) -> J
         raw_job_desc=llm_output.get("raw_job_desc", ""),
         research_sources=llm_output.get("research_sources", []),
     )
+    # Attach optional debug info for UI (not persisted)
+    if "_raw_text" in llm_output:
+        result.llm_raw_text = llm_output.get("_raw_text")  # type: ignore[attr-defined]
+    elif "raw_text" in llm_output:
+        result.llm_raw_text = llm_output.get("raw_text")  # type: ignore[attr-defined]
+    if "llm_error" in llm_output:
+        result.llm_error = llm_output.get("llm_error")  # type: ignore[attr-defined]
 
     db.save_job_research_result(result)
     return result

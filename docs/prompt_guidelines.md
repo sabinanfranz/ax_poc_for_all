@@ -5,11 +5,11 @@
 - Always restate role/goal, expected format, and guardrails in system prompts.
 - Enforce JSON/YAML schemas where applicable; return machine-parseable text.
 - On errors or ambiguity, ask for clarification with minimal retries.
-- [TODO] Define safety filters and citation requirements.
+- [Update v1.1] Prompts stored under `ax_agent_factory/prompts/*.txt` and loaded via `infra/prompts.py`; avoid inline code fences; web_search-aware prompts should request plain JSON without fences.
 
 ## Prompt Types
-- Job Research: gather company/role signals, sources, and summaries.
-- IVC: extract tasks, classify phases, format canonical payloads.
+- Job Research: gather company/role signals, sources, and summaries. [v1.1: prompts/job_research.txt]
+- IVC: extract tasks, classify phases, format canonical payloads. [v1.1: prompts/ivc_task_extractor.txt, prompts/ivc_phase_classifier.txt]
 - DNA: map primitives/domains and mechanisms from tasks.
 - Workflow Architect: structure tasks and dependencies; produce Mermaid drafts.
 - AX Architect: translate workflows into AX components.

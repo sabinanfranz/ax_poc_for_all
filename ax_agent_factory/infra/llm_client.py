@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from typing import Any, Dict
 
 try:  # Optional dependency for runtime; tests can monkeypatch this module.
@@ -30,11 +31,16 @@ class LLMClient:
         raise NotImplementedError("LLM API 연동은 별도 구현 예정")
 
 
+DEFAULT_GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+
+
 def call_gemini_job_research(
     company_name: str,
     job_title: str,
     manual_jd_text: str | None = None,
     max_tokens: int = 4096,
+    *,
+    model: str | None = None,
 ) -> Dict[str, Any]:
     """
     Gemini 1.5 Pro + web_browsing tool을 사용해 직무 리서치를 수행한다.
@@ -63,39 +69,18 @@ def call_gemini_job_research(
     GOOGLE_API_KEY 환경변수로 인증하며, google-genai SDK가 없거나 키가 없으면 스텁을 반환한다.
     """
 
-    prompt = f"""
-    [역할]
-    당신은 Job Research 전문 에이전트입니다. Google Search web_browsing 도구를 사용해 직무 설명을 수집/통합합니다.
-
-    [입력]
-    - 회사명: {company_name}
-    - 직무명: {job_title}
-    - 수동 JD 텍스트: {manual_jd_text or '제공되지 않음'}
-
-    [출력 요구]
-    JSON 한 개만 반환하세요. 마크다운/설명 없이 순수 JSON.
-    {{
-      "raw_job_desc": "string",
-      "research_sources": [
-        {{"url": "string", "title": "string", "snippet": "string", "source_type": "jd | article | company_page | etc", "score": 0.0}}
-      ]
-    }}
-    """.strip()
+    prompt_template = _load_prompt("job_research")
+    replacements = {
+        "company_name": company_name,
+        "job_title": job_title,
+        "manual_jd_text": manual_jd_text or "제공되지 않음",
+    }
+    prompt = prompt_template
+    for key, val in replacements.items():
+        prompt = prompt.replace(f"{{{key}}}", str(val))
 
     if genai is None or os.environ.get("GOOGLE_API_KEY") is None:
-        # Stub fallback when SDK/key unavailable
-        return {
-            "raw_job_desc": f"{company_name} {job_title} 역할에 대한 예시 직무 설명 (stub)",
-            "research_sources": [
-                {
-                    "url": "https://example.com/jd",
-                    "title": f"{company_name} {job_title} JD",
-                    "snippet": "Example snippet",
-                    "source_type": "jd",
-                    "score": 0.5,
-                }
-            ],
-        }
+        return _stub_job_research(company_name, job_title)
 
     client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
     grounding_tool = types.Tool(google_search=types.GoogleSearch())
@@ -105,15 +90,62 @@ def call_gemini_job_research(
     )
 
     response = client.models.generate_content(
-        model="gemini-1.5-pro",
+        model=model or DEFAULT_GEMINI_MODEL,
         contents=[{"role": "user", "parts": [{"text": prompt}]}],
         config=config,
     )
 
     raw_text = getattr(response, "text", "") or ""
+    cleaned = _clean_json_text(raw_text)
     try:
-        parsed = json.loads(raw_text)
+        parsed = json.loads(cleaned)
+        parsed["_raw_text"] = raw_text  # include raw text for UI/debug
+        return parsed
     except Exception as exc:  # pragma: no cover - depends on runtime response
-        raise ValueError(f"Gemini 응답을 JSON으로 파싱할 수 없습니다: {raw_text[:200]}") from exc
+        return _stub_job_research(
+            company_name,
+            job_title,
+            llm_error=str(exc),
+            raw_text=raw_text[:1000],
+        )
 
-    return parsed
+
+def _stub_job_research(company_name: str, job_title: str, **extra: Any) -> Dict[str, Any]:
+    """Return stubbed Job Research output when LLM is unavailable or parsing fails."""
+    stub = {
+        "raw_job_desc": f"{company_name} {job_title} 역할에 대한 예시 직무 설명 (stub)",
+        "research_sources": [
+            {
+                "url": "https://example.com/jd",
+                "title": f"{company_name} {job_title} JD",
+                "snippet": "Example snippet",
+                "source_type": "jd",
+                "score": 0.5,
+            }
+        ],
+    }
+    if extra:
+        stub.update(extra)
+    return stub
+
+
+def _clean_json_text(raw_text: str) -> str:
+    """Remove code fences and extraneous text around JSON."""
+    text = raw_text.strip()
+    # Strip ```json ... ``` fences
+    if text.startswith("```"):
+        text = re.sub(r"^```[a-zA-Z]*", "", text).strip()
+        if text.endswith("```"):
+            text = text[: -3].strip()
+    # If still not valid, try to extract from first '{' to last '}'
+    if "{" in text and "}" in text:
+        start = text.find("{")
+        end = text.rfind("}")
+        text = text[start : end + 1]
+    return text
+
+
+def _load_prompt(name: str) -> str:
+    """Wrapper to load prompt templates from prompts package."""
+    return load_prompt(name)
+from ax_agent_factory.infra.prompts import load_prompt

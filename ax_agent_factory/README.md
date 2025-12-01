@@ -37,6 +37,7 @@ ax_agent_factory/
 pip install -r requirements.txt
 export AX_DB_PATH=./data/ax_factory.db   # 선택, 기본 경로는 data/ax_factory.db
 export GOOGLE_API_KEY=your-gemini-api-key # LLM 연결 시 필요 (없으면 스텁 동작)
+export GEMINI_MODEL=gemini-2.5-flash      # 선택, 기본 gemini-2.5-flash (web_search 지원)
 streamlit run ax_agent_factory/app.py
 ```
 

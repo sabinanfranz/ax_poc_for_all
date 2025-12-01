@@ -14,42 +14,70 @@ IVC Phase와 Primitive-LV1 기준으로 **정확하고 일관되게 분류**하�
 - P3_EXECUTE + COMMIT / primitive_lv1 = COMMIT
 - P4_ASSURE / primitive_lv1 = ASSURE
 
-황금률: "그 행동이 끝났을 때, 즉시 손에 쥐어지는 결과물은 무엇인가?"를 기준으로 판단합니다.
+그 후, 배정 결과를 ivc_tasks 배열과 phase_summary로 구조화하여 반환합니다.
+
+[IVC Phase & Primitive-LV1 정의 및 황금률]
+
+황금률: **"그 행동이 끝났을 때, 즉시 손에 쥐어지는 결과물은 무엇인가?"**를 기준으로 판단합니다.
+
+1. P1. SENSE (인지/수집) / primitive_lv1 = SENSE
+   - 가공되지 않은 '날것의 기록'이 남는 단계.
+   - 예: 고객 문의 이메일 확인하기, CRM에 리드 정보 기록하기, 경쟁사 웹사이트 정보 캡처하기
+
+2. P2. DECIDE (계획/설계) / primitive_lv1 = DECIDE
+   - 법적/제도적 효력이 없는 '계획안'이나 '초안'이 남는 단계.
+   - 예: 미팅 아젠다 설계하기, 교육 커리큘럼 초안 잡기, 예산 배분안 작성하기
+
+3. P3. EXECUTE (실행/창출) / primitive_lv1 = TRANSFORM / TRANSFER / COMMIT
+   - 세상에 실질적인 변화를 만드는 단계로, 결과물에 따라 아래 3가지로 세분화됩니다.
+
+   3-1) P3 EXECUTE - TRANSFORM / primitive_lv1 = TRANSFORM
+       - '새로운 파일, 수정된 문서, 조립된 물건'이 남는 경우.
+       - 예: 제안서 PDF 파일 생성하기, 발표자료 오탈자 수정하기, 실습 키트 조립하기
+
+   3-2) P3 EXECUTE - TRANSFER / primitive_lv1 = TRANSFER
+       - '발송/이동 기록, 캘린더 초대장, 입금 확인 내역'이 남는 경우.
+       - 예: 고객에게 계약서 발송하기, 대금 수납하기, 미팅 일정 예약/공유하기
+
+   3-3) P3 EXECUTE - COMMIT / primitive_lv1 = COMMIT
+       - '서명된 계약서, 공식 승인 기록, 시스템 Lock'이 남는 경우.
+       - 예: 계약서에 전자서명 받기, 예산 최종 확정하기, 폴더 접근 권한 부여하기
+
+4. P4. ASSURE (검증/보증) / primitive_lv1 = ASSURE
+   - 수정 행위 없이, 기준에 부합하는지 여부를 판단한 '검증 기록(체크리스트, 테스트 결과)'이 남는 단계.
+   - 예: 발송 전 제안서의 가격 오류 검토하기, 파일럿 강의 만족도 평가하기, QA 테스트 수행하기
+
+[분류 규칙]
+1. 출력 ivc_tasks 배열의 길이는 입력 task_atoms 배열의 길이와 **완전히 동일**해야 합니다.
+   - 어떤 과업도 누락하거나 합치지 않습니다.
+2. 각 과업에 대해:
+   - task_id, task_korean, task_original_sentence는 입력 task_atoms의 값을 그대로 복사합니다.
+   - ivc_phase는 위 4개 값 중 하나로 설정합니다.
+   - ivc_exec_subphase는
+     - P3_EXECUTE인 경우: TRANSFORM / TRANSFER / COMMIT 중 하나
+     - 그 외 Phase인 경우: null
+   - primitive_lv1는 항상 SENSE / DECIDE / TRANSFORM / TRANSFER / COMMIT / ASSURE 중 하나이며,
+     ivc_phase 및 ivc_exec_subphase와 논리적으로 일치해야 합니다.
+3. classification_reason에는
+   - 왜 그 Phase/Primitive로 분류했는지, "즉시 남는 결과물" 관점에서 한두 문장으로 설명합니다.
 
 [출력 JSON 규칙]
-1. 출력은 반드시 하나의 JSON 객체만 반환합니다. 마크다운/설명/백틱 없이 순수 JSON.
-2. job_meta는 입력을 그대로 복사합니다.
-3. ivc_tasks 배열 길이는 입력 task_atoms와 동일해야 합니다.
-4. phase_summary에는 각 카테고리별 개수를 집계합니다.
+1. 출력은 반드시 **하나의 JSON 객체만** 반환합니다.
+   - ``` 같은 코드 블록, 마크다운, 자연어 설명을 함께 출력하지 않습니다.
+2. job_meta는 입력 JSON의 job_meta를 그대로 복사합니다.
+3. ivc_tasks 배열의 각 원소는 위 [분류 규칙]을 모두 만족해야 합니다.
+4. phase_summary에는 각 카테고리별 과업 개수를 집계합니다.
+   - 예: P3_EXECUTE_TRANSFORM 과업이 4개면 "P3_EXECUTE_TRANSFORM": {"count": 4}
+5. 입력에 정의되지 않은 새로운 top-level 필드를 추가하지 않습니다.
 
-[출력 JSON 스키마]
-{
-  "job_meta": {
-    "company_name": "string",
-    "job_title": "string",
-    "industry_context": "string",
-    "business_goal": "string | null"
-  },
-  "ivc_tasks": [
-    {
-      "task_id": "T01",
-      "task_korean": "string",
-      "task_original_sentence": "string",
-      "ivc_phase": "P1_SENSE | P2_DECIDE | P3_EXECUTE | P4_ASSURE",
-      "ivc_exec_subphase": "TRANSFORM | TRANSFER | COMMIT | null",
-      "primitive_lv1": "SENSE | DECIDE | TRANSFORM | TRANSFER | COMMIT | ASSURE",
-      "classification_reason": "string"
-    }
-  ],
-  "phase_summary": {
-    "P1_SENSE": {"count": 0},
-    "P2_DECIDE": {"count": 0},
-    "P3_EXECUTE_TRANSFORM": {"count": 0},
-    "P3_EXECUTE_TRANSFER": {"count": 0},
-    "P3_EXECUTE_COMMIT": {"count": 0},
-    "P4_ASSURE": {"count": 0}
-  }
-}
+[작업 절차]
+1. 입력 JSON을 파싱하고 job_meta, task_atoms를 확인합니다.
+2. 각 task_atom에 대해 task_korean과 task_original_sentence를 읽고,
+   "이 행동이 끝났을 때 손에 쥐는 결과물이 무엇인지"를 상상하여 Phase/Primitive를 판단합니다.
+3. 위 정의/예시/황금률을 사용해 P1_SENSE, P2_DECIDE, P3_EXECUTE(TRANSFORM/TRANSFER/COMMIT), P4_ASSURE 중 하나를 선택합니다.
+4. 선택 이유를 classification_reason에 간단히 기록합니다.
+5. 모든 과업에 대해 분류를 끝낸 뒤, ivc_tasks 배열과 phase_summary를 포함하는 최종 JSON 객체를 구성합니다.
+6. 최종적으로, 위 [출력 JSON 스키마]를 충족하는 **순수 JSON 문자열** 한 개만 출력합니다.
 
 [입력 JSON]
-{input_json}
+{{input_json}}

@@ -40,7 +40,7 @@ def test_ivc_pipeline_happy_path():
     )
 
     extractor_output = {
-        "job_meta": job_input.job_meta.dict(),
+        "job_meta": job_input.job_meta.model_dump(),
         "task_atoms": [
             {
                 "task_id": "T01",
@@ -60,7 +60,7 @@ def test_ivc_pipeline_happy_path():
     }
 
     classifier_output = {
-        "job_meta": job_input.job_meta.dict(),
+        "job_meta": job_input.job_meta.model_dump(),
         "ivc_tasks": [
             {
                 "task_id": "T01",

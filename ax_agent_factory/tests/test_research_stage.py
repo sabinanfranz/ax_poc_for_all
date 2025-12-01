@@ -49,3 +49,25 @@ def test_run_job_research_requires_id(monkeypatch):
     )
     with pytest.raises(ValueError):
         research.run_job_research(job_run)
+
+
+def test_run_job_research_carries_llm_debug(monkeypatch, tmp_path):
+    db_path = tmp_path / "test.db"
+    db.set_db_path(str(db_path))
+
+    job_run = db.create_job_run("Acme", "Analyst")
+    fake_output = {
+        "raw_job_desc": "desc",
+        "research_sources": [],
+        "llm_error": "parse fail",
+        "raw_text": "bad json",
+    }
+
+    monkeypatch.setattr(
+        "ax_agent_factory.infra.llm_client.call_gemini_job_research",
+        lambda **kwargs: fake_output,
+    )
+
+    result = research.run_job_research(job_run)
+    assert getattr(result, "llm_error", None) == "parse fail"
+    assert getattr(result, "llm_raw_text", None) == "bad json"

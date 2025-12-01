@@ -1,3 +1,3 @@
-# Ignore all files in data directory (e.g., sqlite db, caches)
+# default DB location (left empty so directory is created when needed)
 *
 !.gitignore

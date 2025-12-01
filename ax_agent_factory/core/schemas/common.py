@@ -76,6 +76,7 @@ class PhaseClassificationResult(BaseModel):
     job_meta: JobMeta
     ivc_tasks: List[IVCTask]
     phase_summary: PhaseSummary
+    task_atoms: Optional[List[IVCAtomicTask]] = None
 
 
 IVCPipelineOutput = PhaseClassificationResult

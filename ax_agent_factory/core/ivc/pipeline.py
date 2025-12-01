@@ -35,4 +35,6 @@ def run_ivc_pipeline(
         job_meta=extraction_result.job_meta, task_atoms=extraction_result.task_atoms
     )
     classification_result = classifier.run(classifier_input)
+    # Attach task_atoms to classifier result for UI/cache convenience
+    classification_result.task_atoms = extraction_result.task_atoms
     return classification_result

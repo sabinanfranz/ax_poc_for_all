@@ -18,9 +18,9 @@ class IVCTaskExtractor:
 
     def build_prompt(self, job_input: JobInput) -> str:
         """[IVC_TASK_EXTRACTOR_PROMPT_SPEC]에 따른 프롬프트 생성."""
-        input_json = job_input.dict()
+        input_json = job_input.model_dump()
         template = load_prompt("ivc_task_extractor")
-        return template.format(input_json=json.dumps(input_json, ensure_ascii=False))
+        return template.replace("{input_json}", json.dumps(input_json, ensure_ascii=False))
 
     def parse_response(self, raw_output: str) -> TaskExtractionResult:
         """LLM 응답(JSON 문자열 기대)을 파싱해 TaskExtractionResult로 변환."""

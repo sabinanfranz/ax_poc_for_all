@@ -6,6 +6,7 @@ import json
 from typing import Optional
 
 from ax_agent_factory.core.schemas.common import (
+    IVCAtomicTask,
     IVCTaskListInput,
     PhaseClassificationResult,
 )
@@ -21,9 +22,9 @@ class IVCPhaseClassifier:
 
     def build_prompt(self, task_list_input: IVCTaskListInput) -> str:
         """[IVC_PHASE_CLASSIFIER_PROMPT_SPEC]에 따른 프롬프트 생성."""
-        input_json = task_list_input.dict()
+        input_json = task_list_input.model_dump()
         template = load_prompt("ivc_phase_classifier")
-        return template.format(input_json=json.dumps(input_json, ensure_ascii=False))
+        return template.replace("{input_json}", json.dumps(input_json, ensure_ascii=False))
 
     def parse_response(self, raw_output: str) -> PhaseClassificationResult:
         """LLM 응답(JSON 문자열 기대)을 파싱해 PhaseClassificationResult로 변환."""
@@ -79,5 +80,6 @@ class IVCPhaseClassifier:
             "job_meta": task_list_input.job_meta.dict(),
             "ivc_tasks": ivc_tasks,
             "phase_summary": phase_summary,
+            "task_atoms": [atom.dict() for atom in task_list_input.task_atoms],
         }
         return PhaseClassificationResult(**stub_payload)
