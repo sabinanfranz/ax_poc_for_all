@@ -1,0 +1,20 @@
+[2025-12-01 23:07:57,906] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-01 23:07:59,964] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-01 23:07:59,965] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-01 23:08:27,593] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-01 23:08:27,602] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=8336
+[2025-12-01 23:08:27,603] [ERROR] [ax_agent_factory.infra.llm_client] Job research JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 122, in call_gemini_job_research
+    parsed = json.loads(cleaned)
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Unterminated string starting at: line 40 column 14 (char 4003)

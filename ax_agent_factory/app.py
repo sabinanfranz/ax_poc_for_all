@@ -15,9 +15,11 @@ if str(ROOT) not in sys.path:
 from ax_agent_factory.core.pipeline_manager import PipelineManager
 from ax_agent_factory.models.stages import PIPELINE_STAGES
 from ax_agent_factory.infra import db
+from ax_agent_factory.infra.logging_config import setup_logging
 
 
 st.set_page_config(page_title="AX Agent Factory - PoC", layout="wide")
+setup_logging()
 
 
 def main() -> None:
@@ -93,6 +95,8 @@ def main() -> None:
                 render_stage1_tabs(job_run, job_research_result, ivc_result)
             else:
                 st.info("이 Stage의 로직은 아직 구현되지 않았습니다.")
+
+    render_log_expander()
 
 
 def render_stage0_tabs(job_run, job_research_result) -> None:
@@ -179,6 +183,21 @@ def render_stage1_tab(job_run, job_research_result, ivc_result) -> None:
 
     st.subheader("phase_summary")
     st.json(ivc_result.phase_summary.dict())
+
+
+def render_log_expander() -> None:
+    """Show tail of logs/app.log for quick debugging."""
+    log_path = Path("logs/app.log")
+    if not log_path.exists():
+        return
+    try:
+        with log_path.open("r", encoding="utf-8") as f:
+            lines = f.readlines()[-200:]
+        with st.expander("logs/app.log (tail)"):
+            st.text("".join(lines))
+    except Exception:
+        # UI should not break due to log file access issues
+        pass
 
 
 if __name__ == "__main__":
