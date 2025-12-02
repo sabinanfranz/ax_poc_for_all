@@ -18,3 +18,410 @@ Traceback (most recent call last):
     obj, end = self.scan_once(s, idx)
                ^^^^^^^^^^^^^^^^^^^^^^
 json.decoder.JSONDecodeError: Unterminated string starting at: line 40 column 14 (char 4003)
+[2025-12-02 07:06:57,081] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 07:07:00,338] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:07:00,340] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:07:23,289] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:07:23,296] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=0
+[2025-12-02 07:07:23,297] [ERROR] [ax_agent_factory.infra.llm_client] Job research JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 122, in call_gemini_job_research
+    parsed = json.loads(cleaned)
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[2025-12-02 07:20:22,966] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 07:20:25,922] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:20:25,922] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:20:45,571] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:20:45,576] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=0
+[2025-12-02 07:20:45,576] [ERROR] [ax_agent_factory.infra.llm_client] Job research JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 122, in call_gemini_job_research
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[2025-12-02 07:28:22,711] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 07:28:24,227] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:28:24,227] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:28:51,545] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:28:51,545] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=0
+[2025-12-02 07:28:51,545] [ERROR] [ax_agent_factory.infra.llm_client] Job research JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 122, in call_gemini_job_research
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[2025-12-02 07:30:30,341] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 07:30:31,844] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:30:31,844] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:30:56,123] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:30:56,157] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=5160
+[2025-12-02 07:30:56,157] [ERROR] [ax_agent_factory.infra.llm_client] Job research JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 122, in call_gemini_job_research
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Unterminated string starting at: line 12 column 14 (char 2443)
+[2025-12-02 07:31:35,795] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 07:31:37,282] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:31:37,283] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:31:42,268] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:31:42,270] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=110
+[2025-12-02 07:31:42,270] [ERROR] [ax_agent_factory.infra.llm_client] Job research JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 122, in call_gemini_job_research
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[2025-12-02 07:31:51,995] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 07:31:53,475] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:31:53,476] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:32:23,737] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:32:23,753] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=4451
+[2025-12-02 07:32:23,753] [ERROR] [ax_agent_factory.infra.llm_client] Job research JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 122, in call_gemini_job_research
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Unterminated string starting at: line 7 column 18 (char 1782)
+[2025-12-02 07:33:55,992] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=LG생활건강, job_title=브랜드 마케터
+[2025-12-02 07:33:57,427] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:33:57,428] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:34:22,682] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:34:22,682] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=0
+[2025-12-02 07:34:22,682] [ERROR] [ax_agent_factory.infra.llm_client] Job research JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 122, in call_gemini_job_research
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[2025-12-02 07:38:07,211] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 07:38:08,913] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:38:08,914] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:38:34,197] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:38:34,209] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=6197
+[2025-12-02 07:38:34,209] [ERROR] [ax_agent_factory.infra.llm_client] Job research JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 122, in call_gemini_job_research
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Unterminated string starting at: line 28 column 18 (char 2992)
+[2025-12-02 07:44:00,167] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 07:44:01,649] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:44:01,649] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:44:44,371] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:44:44,373] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=7795
+[2025-12-02 07:46:28,458] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 07:46:29,934] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:46:29,935] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:47:15,369] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:47:15,378] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=15056
+[2025-12-02 07:47:42,115] [INFO] [ax_agent_factory.infra.llm_client] call_gemini_job_research started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 07:47:43,684] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research model=gemini-2.5-flash
+[2025-12-02 07:47:43,686] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 07:47:50,340] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 07:47:50,340] [INFO] [ax_agent_factory.infra.llm_client] Gemini raw response received. length=310
+[2025-12-02 07:47:50,340] [ERROR] [ax_agent_factory.infra.llm_client] Job research JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 122, in call_gemini_job_research
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[2025-12-02 07:47:50,359] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=브랜드 매니저
+[2025-12-02 07:47:50,359] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=아모레퍼시픽
+[2025-12-02 07:47:50,359] [INFO] [ax_agent_factory.core.ivc.task_extractor] Calling ivc_task_extractor LLM...
+[2025-12-02 07:47:50,359] [INFO] [ax_agent_factory.infra.llm_client] LLMClient.call invoked with model=gpt-4.1
+[2025-12-02 07:47:50,359] [WARNING] [ax_agent_factory.core.ivc.task_extractor] LLM not implemented; returning stub result
+[2025-12-02 07:47:50,359] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC TaskExtractor finished. task_atoms=1
+[2025-12-02 07:47:50,359] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=아모레퍼시픽
+[2025-12-02 07:47:50,359] [INFO] [ax_agent_factory.core.ivc.phase_classifier] Calling ivc_phase_classifier LLM...
+[2025-12-02 07:47:50,359] [INFO] [ax_agent_factory.infra.llm_client] LLMClient.call invoked with model=gpt-4.1
+[2025-12-02 07:47:50,359] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC PhaseClassifier finished. ivc_tasks=1
+[2025-12-02 07:47:50,359] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline finished.
+[2025-12-02 08:10:29,702] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 08:10:31,243] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 08:10:31,244] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:10:54,312] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:10:54,320] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=24212
+[2025-12-02 08:10:54,320] [ERROR] [ax_agent_factory.infra.llm_client] Collect JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 294, in call_job_research_collect
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Unterminated string starting at: line 102 column 14 (char 11835)
+[2025-12-02 08:10:54,363] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 08:10:55,961] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 08:10:55,961] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:11:13,516] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:11:13,516] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=2086
+[2025-12-02 08:15:00,410] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 08:15:01,918] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 08:15:01,919] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:15:22,017] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:15:22,017] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=35
+[2025-12-02 08:15:22,050] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 08:15:22,747] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 08:15:22,763] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:15:42,929] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:15:42,929] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=491
+[2025-12-02 08:15:42,929] [ERROR] [ax_agent_factory.infra.llm_client] Summarize JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 409, in call_job_research_summarize
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Unterminated string starting at: line 2 column 19 (char 20)
+[2025-12-02 08:15:42,956] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=브랜드 매니저
+[2025-12-02 08:15:42,956] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=아모레퍼시픽
+[2025-12-02 08:15:42,956] [INFO] [ax_agent_factory.core.ivc.task_extractor] Calling ivc_task_extractor LLM...
+[2025-12-02 08:15:42,956] [INFO] [ax_agent_factory.infra.llm_client] LLMClient.call invoked with model=gpt-4.1
+[2025-12-02 08:15:42,969] [WARNING] [ax_agent_factory.core.ivc.task_extractor] LLM not implemented; returning stub result
+[2025-12-02 08:15:42,969] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC TaskExtractor finished. task_atoms=1
+[2025-12-02 08:15:42,969] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=아모레퍼시픽
+[2025-12-02 08:15:42,971] [INFO] [ax_agent_factory.core.ivc.phase_classifier] Calling ivc_phase_classifier LLM...
+[2025-12-02 08:15:42,971] [INFO] [ax_agent_factory.infra.llm_client] LLMClient.call invoked with model=gpt-4.1
+[2025-12-02 08:15:42,979] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC PhaseClassifier finished. ivc_tasks=1
+[2025-12-02 08:15:42,979] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline finished.
+[2025-12-02 08:18:51,735] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 08:18:53,235] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 08:18:53,235] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:19:07,495] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:19:07,498] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=23
+[2025-12-02 08:19:07,530] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 08:19:09,016] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 08:19:09,017] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:19:23,185] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:19:23,186] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=1623
+[2025-12-02 08:27:53,586] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 08:27:55,066] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 08:27:55,067] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:28:17,997] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:28:18,007] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=7186
+[2025-12-02 08:28:18,008] [ERROR] [ax_agent_factory.infra.llm_client] Collect JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 294, in call_job_research_collect
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Unterminated string starting at: line 52 column 14 (char 3317)
+[2025-12-02 08:28:18,046] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 08:28:19,795] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 08:28:19,795] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:28:30,360] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:28:30,363] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=932
+[2025-12-02 08:32:17,757] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-02 08:32:20,538] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 08:32:20,539] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:32:44,406] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:32:44,422] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=5825
+[2025-12-02 08:32:44,422] [ERROR] [ax_agent_factory.infra.llm_client] Collect JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 294, in call_job_research_collect
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Unterminated string starting at: line 43 column 14 (char 2801)
+[2025-12-02 08:32:44,454] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 08:32:45,872] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 08:32:45,872] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:33:05,111] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:33:05,111] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=1392
+[2025-12-02 08:33:05,111] [ERROR] [ax_agent_factory.infra.llm_client] Summarize JSON parsing failed; returning stub
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 409, in call_job_research_summarize
+    parsed = json.loads(cleaned, strict=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ^^^^^^^^^^^^^^^^^^^^^^
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 17 column 6 (char 1218)
+[2025-12-02 08:33:05,140] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=브랜드 매니저
+[2025-12-02 08:33:05,140] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=아모레퍼시픽
+[2025-12-02 08:33:05,145] [INFO] [ax_agent_factory.core.ivc.task_extractor] Calling ivc_task_extractor LLM...
+[2025-12-02 08:33:05,145] [INFO] [ax_agent_factory.infra.llm_client] LLMClient.call invoked with model=gpt-4.1
+[2025-12-02 08:33:05,154] [WARNING] [ax_agent_factory.core.ivc.task_extractor] LLM not implemented; returning stub result
+[2025-12-02 08:33:05,154] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC TaskExtractor finished. task_atoms=1
+[2025-12-02 08:33:05,154] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=아모레퍼시픽
+[2025-12-02 08:33:05,154] [INFO] [ax_agent_factory.core.ivc.phase_classifier] Calling ivc_phase_classifier LLM...
+[2025-12-02 08:33:05,154] [INFO] [ax_agent_factory.infra.llm_client] LLMClient.call invoked with model=gpt-4.1
+[2025-12-02 08:33:05,165] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC PhaseClassifier finished. ivc_tasks=1
+[2025-12-02 08:33:05,165] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline finished.
+[2025-12-02 08:38:52,896] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 08:38:54,403] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 08:38:54,404] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:39:16,822] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:39:16,825] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=7175
+[2025-12-02 08:39:16,825] [WARNING] [ax_agent_factory.infra.llm_client] Collect JSON parsing failed; returning stub
+[2025-12-02 08:39:16,862] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 08:39:18,333] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 08:39:18,334] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:39:38,141] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:39:38,141] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=1018
+[2025-12-02 08:39:38,141] [WARNING] [ax_agent_factory.infra.llm_client] Summarize JSON parsing failed; returning stub
+[2025-12-02 08:41:50,302] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 08:41:53,336] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 08:41:53,337] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:42:17,224] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:42:17,226] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=4190
+[2025-12-02 08:42:17,228] [WARNING] [ax_agent_factory.infra.llm_client] Collect JSON parsing failed; returning stub
+[2025-12-02 08:42:17,273] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 08:42:19,428] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 08:42:19,428] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:42:38,564] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:42:38,566] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=0
+[2025-12-02 08:42:38,567] [WARNING] [ax_agent_factory.infra.llm_client] Summarize JSON parsing failed; returning stub
+[2025-12-02 08:47:23,050] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 08:47:24,653] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 08:47:24,653] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:47:46,079] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:47:46,092] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=3894
+[2025-12-02 08:47:46,128] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 08:47:47,679] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 08:47:47,680] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 08:48:09,200] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 08:48:09,231] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=2770
+[2025-12-02 09:01:03,746] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 09:01:07,584] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 09:01:07,585] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:01:35,491] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:01:35,507] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=4690
+[2025-12-02 09:01:35,546] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 09:01:37,759] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 09:01:37,759] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:02:00,405] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:02:00,406] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=2244
+[2025-12-02 09:02:22,682] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 09:02:24,182] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 09:02:24,183] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:03:01,440] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:03:01,449] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=6397
+[2025-12-02 09:03:01,485] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 09:03:02,876] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 09:03:02,876] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:03:13,773] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:03:13,774] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=932
+[2025-12-02 09:03:13,812] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=브랜드 매니저
+[2025-12-02 09:03:13,812] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-02 09:03:13,813] [INFO] [ax_agent_factory.core.ivc.task_extractor] Calling ivc_task_extractor LLM...
+[2025-12-02 09:03:13,814] [INFO] [ax_agent_factory.infra.llm_client] LLMClient.call invoked with model=gpt-4.1
+[2025-12-02 09:03:13,828] [WARNING] [ax_agent_factory.core.ivc.task_extractor] LLM not implemented; returning stub result
+[2025-12-02 09:03:13,829] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC TaskExtractor finished. task_atoms=1
+[2025-12-02 09:03:13,829] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-02 09:03:13,830] [INFO] [ax_agent_factory.core.ivc.phase_classifier] Calling ivc_phase_classifier LLM...
+[2025-12-02 09:03:13,831] [INFO] [ax_agent_factory.infra.llm_client] LLMClient.call invoked with model=gpt-4.1
+[2025-12-02 09:03:13,844] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC PhaseClassifier finished. ivc_tasks=1
+[2025-12-02 09:03:13,844] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline finished.

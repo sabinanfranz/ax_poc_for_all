@@ -1,5 +1,6 @@
 # Iteration Log
+> Last updated: 2025-12-02 (by AX Agent Factory Codex)
 
 | 날짜 | 변경 내용 | 이유 | 영향 |
 | --- | --- | --- | --- |
-| 2024-XX-XX | v1.1 PoC 정리: Stage 0/1 파이프라인 구현, 프롬프트 외부화, 기본 모델 gemini-2.5-flash, LLM 에러/원문 UI 노출, 레포 구조 일원화 | Stage 0/1 검증 및 디버깅 용이성 확보, 혼선 해소 | UI에서 Stage 0/1 결과 확인 가능, LLM 키 없을 때 스텁 유지, 문서/테스트 최신화 |
+| 2025-12-02 | docs 최신화: Stage 0/1 스키마/플로우/프롬프트 규칙 반영, gemini_models 단순화 | 코드/문서 싱크 유지, 비개발자 가독성 확보 | 실행/문서 간 혼선 감소, 스텁/LLM 동작 이해도 향상 |

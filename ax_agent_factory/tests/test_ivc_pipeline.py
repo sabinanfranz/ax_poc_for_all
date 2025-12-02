@@ -41,6 +41,7 @@ def test_ivc_pipeline_happy_path():
 
     extractor_output = {
         "job_meta": job_input.job_meta.model_dump(),
+        "raw_job_desc": job_input.raw_job_desc,
         "task_atoms": [
             {
                 "task_id": "T01",
@@ -61,6 +62,7 @@ def test_ivc_pipeline_happy_path():
 
     classifier_output = {
         "job_meta": job_input.job_meta.model_dump(),
+        "raw_job_desc": job_input.raw_job_desc,
         "ivc_tasks": [
             {
                 "task_id": "T01",
@@ -98,6 +100,7 @@ def test_ivc_pipeline_happy_path():
     assert output.phase_summary.P3_EXECUTE_TRANSFORM["count"] == 1
     assert output.ivc_tasks[0].primitive_lv1 == "SENSE"
     assert output.ivc_tasks[1].ivc_exec_subphase == "TRANSFORM"
+    assert output.raw_job_desc == job_input.raw_job_desc
 
 
 def test_ivc_pipeline_raises_on_bad_json():

@@ -24,3 +24,11 @@ class JobResearchResult:
     job_run_id: int
     raw_job_desc: str
     research_sources: List[dict[str, Any]]
+
+
+@dataclass
+class JobResearchCollectResult:
+    """Represents the output of Stage 0.1 Web Research Collector."""
+
+    job_run_id: int
+    raw_sources: List[dict[str, Any]]

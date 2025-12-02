@@ -15,6 +15,7 @@ IVC Phase 기준으로 분류하는 전문 에이전트입니다.
 
 출력은:
 - job_meta: 입력과 동일하게 복사
+- raw_job_desc: 입력과 동일하게 복사
 - task_atoms: 입력과 동일하게 복사
 - ivc_tasks: 각 task_id에 대해 phase와 간단한 이유(reason)를 부여한 리스트
 - phase_summary: 각 Phase별 task 개수 집계
@@ -182,5 +183,8 @@ IVC Phase 기준으로 분류하는 전문 에이전트입니다.
   }
 }
 
-[입력 JSON]
-{{input_json}}
+[입력 JSON (이번 호출의 실제 값)]
+아래는 이번 호출에서 전달된 **실제 입력 JSON 전체**입니다.
+이 JSON을 기반으로 위 규칙에 따라 ivc_tasks와 phase_summary를 생성하십시오.
+
+{input_json}

@@ -1,19 +1,49 @@
 # AX Agent Factory – Architecture
+> Last updated: 2025-12-02 (by AX Agent Factory Codex)
 
-## System Overview
-Streamlit frontend orchestrating modular pipelines for research → IVC → DNA → workflow → AX → AgentSpec → Skills → Prompts → Runner. [Update v1.1: Stage 0/1 PoC live with PipelineManager + SQLite + Gemini web_search wrapper; prompts externalized.]
+## 1. 시스템 개요 (레이어)
+- **UI**: `app.py` (Streamlit). 회사/직무 입력 → Stage 0/1 실행 버튼 → 결과/LLM 원문 탭 표시.
+- **Core**: 비즈니스 로직과 파이프라인.
+  - `core/pipeline_manager.py`: Stage 실행/캐시 오케스트레이션.
+  - `core/research/*`: Stage 0 Job Research (0.1 Collect → 0.2 Summarize).
+  - `core/ivc/*`: Stage 1 IVC(Task Extractor, Phase Classifier, pipeline).
+  - `core/dna.py`, `core/workflow.py`: Stage 2/3 스텁.
+- **Infra**: 공통 유틸.
+  - `infra/db.py`: SQLite CRUD(job_runs, job_research_results, job_research_collect_results), 경로 `AX_DB_PATH` 기본 `data/ax_factory.db`.
+  - `infra/llm_client.py`: Gemini web_browsing 호출 + JSON 파싱/스텁. 공용 LLMClient(call 미구현 시 NotImplementedError → 스텁 사용).
+  - `infra/prompts.py`: 프롬프트 파일 로더(LRU 캐시).
+  - `infra/logging_config.py`: 콘솔+회전 파일 로그 초기화.
+- **Models/Schemas**:
+  - `models/job_run.py`: JobRun, JobResearchResult, JobResearchCollectResult dataclass.
+  - `models/stages.py`: Stage 메타(PIPELINE_STAGES).
+  - `core/schemas/common.py`: IVC 입력/출력 Pydantic 모델(JobMeta, JobInput, IVCAtomicTask, IVCTask, PhaseSummary 등).
+- **Prompts**: `prompts/*.txt`로 Stage별 프롬프트 분리.
 
-## Pipeline Architecture
-Stages 0-9 covering ingestion, research, IVC (A/B/C), DNA (A/B), workflow, AX, AgentSpec, prompts, and runner. [Update v1.1: Stage 0/1 implemented with typed schemas and stubs for missing stages; run_ivc_pipeline links Task Extractor → Phase Classifier.]
+## 2. PipelineManager 역할
+- “Stage 공장장”: 버튼 입력 시 JobRun을 만들고 Stage 순서대로 실행.
+- **캐싱 전략**: Stage 0 결과가 DB에 있으면 재사용(단, force_rerun=True 시 새 호출). Stage 1은 Stage 0 결과가 없으면 에러.
+- **확장성**: `PIPELINE_STAGES`의 `run_fn_name`을 호출하는 구조로 Stage 추가 시 확장 용이.
 
-## Module & Package Structure
-Python packages under `ax_agent_factory` aligned to pipeline stages plus `infra` for shared services. [Update v1.1: core/pipeline_manager.py, core/research.py, core/ivc/{task_extractor,phase_classifier,pipeline}.py; infra/{db,llm_client,prompts}.py; models/{job_run,stages}.py; prompts/*.txt]
+## 3. Stage별 구조
+- **Stage 0: Job Research**
+  - 입력: company_name, job_title, manual_jd_text(optional).
+  - 0.1 Collect: `llm_client.call_job_research_collect`(web_search, prompt `job_research_collect.txt`) → raw_sources 저장.
+  - 0.2 Summarize: `llm_client.call_job_research_summarize`(prompt `job_research_summarize.txt`) → raw_job_desc, research_sources.
+  - 출력: JobResearchCollectResult(raw_sources), JobResearchResult(raw_job_desc, research_sources) + UI용 llm_raw_text/llm_error.
+  - 영속화: SQLite에 저장/조회(job_research_collect_results, job_research_results).
+- **Stage 1: IVC**
+  - 입력: JobInput(job_meta + raw_job_desc).
+  - 1-A Task Extractor: `IVCTaskExtractor.run` → `task_atoms[]` (LLM JSON 또는 스텁).
+  - 1-B Phase Classifier: `IVCPhaseClassifier.run` → `ivc_tasks[]`, `phase_summary`, `task_atoms` 첨부.
+  - 오케스트레이션: `core/ivc/pipeline.py::run_ivc_pipeline` → `PipelineManager.run_stage_1_ivc`.
+  - 영속화: 아직 없음(메모리/세션 보관).
+- **Stage 2~3**: dna/workflow 스텁만 존재(미구현).
 
-## LLM Model Strategy
-Provider-agnostic wrapper to swap Gemini/OpenAI; prompt packs per module with safety rails. [Update v1.1: default Gemini model gemini-2.5-flash via env GEMINI_MODEL, web_search tool enabled; stub fallback when key/SDK absent; raw response exposed in UI for debugging.]
+## 4. LLM/프롬프트/로깅
+- **LLM**: Gemini web_browsing(google-genai). 모델 기본 `gemini-2.5-flash`(env `GEMINI_MODEL`). 키나 SDK 없으면 스텁 응답.
+- **프롬프트**: `prompts/job_research_collect.txt`, `prompts/job_research_summarize.txt`, `prompts/ivc_task_extractor.txt`, `prompts/ivc_phase_classifier.txt`. JSON-only 규칙, 코드블록 금지, one-shot 예시 포함.
+- **로깅**: `infra/logging_config.setup_logging`이 콘솔/파일 핸들러 구성(중복 방지 플래그 사용). UI에서 `logs/app.log` tail을 expander로 노출.
 
-## Non-functional Requirements
-Scalability via stateless services, observability hooks, and cacheable LLM calls. [Update v1.1: basic logging via UI, stub fallbacks to keep flow alive; SQLite persistence; future: structured logging + tracing.]
-
-## Open Questions / TODO
-Pending decisions on storage, evaluation metrics, and human-in-the-loop checkpoints. [Update v1.1: define Stage 2/3 schemas, add retry/robust parsing, persist task_atoms, add auth/secrets management.]
+## 5. 테스트 및 관측 포인트
+- 테스트: `ax_agent_factory/tests`에서 DB 캐시, Stage 0 결과 저장, Stage 1 파이프라인 파싱/스텁 동작 검증.
+- 관측: Stage별 logger 사용, UI 탭에서 LLM raw/error 확인. 향후 JSON 밸리데이션 강화/메트릭 추가 예정.

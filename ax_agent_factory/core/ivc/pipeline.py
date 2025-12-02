@@ -37,7 +37,9 @@ def run_ivc_pipeline(
     extraction_result: TaskExtractionResult = extractor.run(job_input)
     logger.info("IVC TaskExtractor finished. task_atoms=%d", len(extraction_result.task_atoms))
     classifier_input = IVCTaskListInput(
-        job_meta=extraction_result.job_meta, task_atoms=extraction_result.task_atoms
+        job_meta=extraction_result.job_meta,
+        raw_job_desc=job_input.raw_job_desc,
+        task_atoms=extraction_result.task_atoms,
     )
     classification_result = classifier.run(classifier_input)
     logger.info("IVC PhaseClassifier finished. ivc_tasks=%d", len(classification_result.ivc_tasks))

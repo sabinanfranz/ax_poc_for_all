@@ -115,6 +115,7 @@ class IVCPhaseClassifier:
         }
         stub_payload = {
             "job_meta": task_list_input.job_meta.dict(),
+            "raw_job_desc": task_list_input.raw_job_desc,
             "ivc_tasks": ivc_tasks,
             "phase_summary": phase_summary,
             "task_atoms": [atom.dict() for atom in task_list_input.task_atoms],

@@ -44,6 +44,7 @@ class IVCTaskListInput(BaseModel):
     """Phase Classifier 입력: Task Extractor 결과 그대로 사용."""
 
     job_meta: JobMeta
+    raw_job_desc: str
     task_atoms: List[IVCAtomicTask]
 
 
@@ -74,6 +75,7 @@ class PhaseClassificationResult(BaseModel):
     """Phase Classifier 출력: 분류된 태스크 + 요약."""
 
     job_meta: JobMeta
+    raw_job_desc: Optional[str] = None
     ivc_tasks: List[IVCTask]
     phase_summary: PhaseSummary
     task_atoms: Optional[List[IVCAtomicTask]] = None

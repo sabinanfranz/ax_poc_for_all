@@ -1,34 +1,52 @@
-# Usage Guide (AX Agent Factory v1.1)
+# Usage Guide
+> Last updated: 2025-12-02 (by AX Agent Factory Codex)
 
-## 빠른 실행 (PowerShell 예시)
-```powershell
-$Env:GOOGLE_API_KEY="your-valid-key"; $Env:GEMINI_MODEL="gemini-2.5-flash"; $Env:AX_DB_PATH="C:\Users\admin\Desktop\ax_poc\data\ax_factory.db"; streamlit run ax_agent_factory/app.py
+## 1) 환경 준비
+- Python 3.10+ 권장, 가상환경 사용.
+- 의존성 설치:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
+pip install -r requirements.txt
 ```
-- `GOOGLE_API_KEY` 없으면 스텁 응답.
-- `GEMINI_MODEL` 생략 시 기본 `gemini-2.5-flash`.
-- `AX_DB_PATH` 생략 시 기본 `data/ax_factory.db`.
-
-## .env 로드 (PowerShell)
+- 필수/선택 환경변수  
+  - `GOOGLE_API_KEY`: 없으면 Stage 0이 스텁으로 동작(데모용).  
+  - `GEMINI_MODEL`: 기본 `gemini-2.5-flash` (web_browsing 지원).  
+  - `AX_DB_PATH`: 기본 `data/ax_factory.db` (경로 없으면 자동 생성).  
+- .env 로드 예시(PowerShell):
 ```powershell
 Get-Content .env | % { if ($_ -match '^(?<k>[^=]+)=(?<v>.*)$') { Set-Item Env:$($matches['k']) $matches['v'] } }
 ```
 
-## UI 사용
-1) 사이드바에 회사명/직무명 입력, 필요시 JD 텍스트 입력.  
-2) `0. Job Research 실행` 또는 `0~1단계 실행` 버튼 클릭.  
-3) Stage 탭:
-   - Stage 0: 결과/LLM 응답-에러 탭 확인.
-   - Stage 1: task_atoms (Extractor), ivc_tasks/phase_summary (Classifier), 설명 탭에서 IO/경로 확인.
+## 2) 실행 방법
+```bash
+streamlit run ax_agent_factory/app.py
+```
+- 브라우저가 열리면 사이드바에 회사명/직무명 입력, 필요하면 JD 텍스트를 붙여넣는다.
+- 버튼
+  - `0. Job Research 실행`: Stage 0만 실행, 결과를 DB/세션에 저장.
+  - `0~1단계 실행 (Job Research → IVC)`: Stage 0 실행 후 바로 Stage 1(IVC)까지 수행.
+- 로그: `logs/app.log`가 자동 생성되며, UI 하단 expander에서 tail 확인 가능.
 
-## 테스트
-```powershell
+## 3) 결과 확인 (탭 안내)
+- **Stage 0 탭**
+  - Job Research 결과: `raw_job_desc`, `research_sources` 확인.
+  - LLM 응답/에러: `_raw_text`/`llm_error` 확인(파싱 실패 시 스텁/에러 노출).
+- **Stage 1 탭**
+  - 실행/결과: Task Extractor의 `task_atoms[]`, Phase Classifier의 `ivc_tasks[]`, `phase_summary`.
+  - 설명/IO: 입력/프롬프트/오케스트레이션 경로 안내.
+- LLM 키가 없거나 `LLMClient.call` 미구현 상태에서는 Stage 1이 스텁 결과를 보여준다(동작 검증용).
+
+## 4) 테스트 실행
+```bash
 python -m pytest ax_agent_factory/tests
 ```
+- tmp_path로 DB를 격리하고 LLM 호출을 모킹하여 캐시/파싱/스텁 동작을 검증한다.
 
-## 주요 경로
+## 5) 참고 경로
 - UI: `ax_agent_factory/app.py`
 - 오케스트레이션: `core/pipeline_manager.py`
 - Stage 0: `core/research.py` + `infra/llm_client.py` + `infra/db.py`
-- Stage 1: `core/ivc/{task_extractor, phase_classifier, pipeline}.py`
+- Stage 1: `core/ivc/{task_extractor.py, phase_classifier.py, pipeline.py}`
 - 프롬프트: `ax_agent_factory/prompts/*.txt` (로더: `infra/prompts.py`)
-- 기본 DB: `data/ax_factory.db` (환경변수 `AX_DB_PATH`로 변경 가능)
+- DB 기본 경로: `data/ax_factory.db` (`AX_DB_PATH`로 변경 가능)

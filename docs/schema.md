@@ -1,275 +1,182 @@
-# AX Agent Factory 스키마 개요
+# AX Agent Factory 스키마
+> Last updated: 2025-12-02 (by AX Agent Factory Codex)
 
-## 1. 전체 개념 지도(Top-level Overview)
-JobRun → JobResearch → IVCResult → DNAResult → WorkflowResult → AXResult(AgentTable_for_AgentArchitect) → AgentSpecsResult(AgentSpecs_for_PromptBuilder) → SkillResult(+SkillSpec) → PromptResult(LLMPrompts_for_n8n) → AgentRun.  
-- JobRun: 회사/직무 실행 식별용 루트 엔티티  
-- JobResearch: 원문 직무 설명과 출처 묶음  
-- IVCResult: IVC-A/B/C 태스크 리스트  
-- DNAResult: TaskCard(IVC+DNA) 정규화 결과  
-- WorkflowResult: 워크플로우 구조 + Mermaid 코드  
-- AXResult: AgentTable_for_AgentArchitect 요약 테이블  
-- AgentSpecsResult: AgentSpecs_for_PromptBuilder 상세 스펙  
-- SkillResult: 스킬 카탈로그 및 에이전트별 스킬 스펙  
-- PromptResult: 에이전트 실행용 LLM 프롬프트 묶음  
-- AgentRun: 샘플 실행 I/O와 모델/평가 로그  
-- Job AX Input Pack: Workflow Architect 입력 패키지 (job_meta + mermaid + task_cards)
-
-## 2. 파이프라인 단계별 입·출력 흐름
-| Step | Input 엔티티/필드 | Output 엔티티/필드 | 설명 |
-|------|-------------------|--------------------|------|
-| 0. Job Research | JobRun(company_name, job_title) | JobResearch(raw_job_desc, sources) | 직무/회사 기반 리서치 텍스트와 소스 수집 |
-| 1. IVC | JobResearch.raw_job_desc | IVCResult.ivc_tasks | IVC-A/B/C로 태스크 추출·분류 |
-| 2. DNA | IVCResult.ivc_tasks | DNAResult.task_cards | 태스크를 DNA(Primitive/Domain/Mechanism)로 주석화 |
-| 3. Workflow Structuring | DNAResult.task_cards | WorkflowResult.workflow_structure | Stage/Stream/Task/Edge 구조화 |
-| 4. Mermaid Visualization | WorkflowResult.workflow_structure | WorkflowResult.mermaid_code | Notion 호환 Mermaid 문자열 생성 |
-| 5. AX Architect | WorkflowResult + Job AX Input Pack | AXResult.agent_table | Stage/Agent 요약 테이블 생성 |
-| 6. Agent Architect | AXResult.agent_table | AgentSpecsResult.agent_specs | 에이전트별 상세 스펙(입출력/제약) 확정 |
-| 7. Skill Planner & Deep Research | AgentSpecsResult.agent_specs | SkillResult.skill_catalog, SkillResult.agent_skill_specs | 스킬 정의 및 에이전트별 스킬 매핑 |
-| 8. Prompt-Builder | AgentSpecsResult.agent_specs, SkillResult | PromptResult.llm_prompts_for_agents | 실행용 프롬프트 묶음 작성 |
-| 9. Runner & Evaluation | PromptResult + 샘플 입력 | AgentRun | 샘플 실행, 모델 정보, 평가 기록 |
-
-입출력 연결 요약:  
-- job_run_id는 모든 Stage 결과에 FK로 공유된다.  
-- Stage 5 출력 `agent_table` 전체가 Stage 6 입력으로 그대로 들어간다.  
-- Stage 6 출력 `agent_specs`가 Stage 8 Prompt-Builder의 기본 입력, Stage 7 Skill Planner는 agent_id 기준으로 스킬을 매핑한다.  
-- Stage 8 출력 `llm_prompts_for_agents`가 Stage 9 Runner의 실행 프롬프트로 사용된다.  
-
-## 3. 엔티티(테이블/JSON 오브젝트)별 상세 스키마
-
-### 3.1 JobRun
-역할: 하나의 직무 실행을 식별하는 루트.  
-| 필드명 | 타입 | 필수 | 설명 |
+## 1. Stage 입출력 요약
+| Stage | Input | Output | 구현 상태 |
 | --- | --- | --- | --- |
-| id | string | Y | JobRun PK |
-| company_name | string | Y | 회사명 |
-| job_title | string | Y | 직무명 |
-| created_at | datetime | Y | 생성 시각 |
+| 0. Job Research | JobRun(company_name, job_title) + optional manual_jd_text | JobResearchResult(raw_job_desc, research_sources) + 디버그용 llm_raw_text/llm_error | 구현 & DB 저장 |
+| 1-A. IVC Task Extractor | JobInput(job_meta, raw_job_desc) | TaskExtractionResult(task_atoms[]) | 구현(LLM 미연동 시 스텁) |
+| 1-B. IVC Phase Classifier | IVCTaskListInput(job_meta, task_atoms) | PhaseClassificationResult(ivc_tasks[], phase_summary, task_atoms) | 구현(LLM 미연동 시 스텁) |
+| 2+. DNA/Workflow/AX… | 설계만 존재 | - | 미구현 |
 
-### 3.2 JobResearch
-역할: 리서치 텍스트와 출처.  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| job_run_id | string | Y | JobRun FK |
-| raw_job_desc | string | Y | 직무 설명 합성 텍스트 |
-| sources[] | array | N | 리서치 소스 목록 |
-| sources[].source_type | string | Y | web \| manual |
-| sources[].url_or_id | string | Y | URL 또는 식별자 |
-| sources[].note | string | N | 설명 |
+## 2. 도메인 모델 (dataclass)
 
-### 3.3 IVCResult
-역할: IVC-A/B/C 태스크 리스트.  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| job_run_id | string | Y | JobRun FK |
-| ivc_tasks | array | Y | Phase별 태스크 리스트(태스크 atom + phase) |
+### JobRun (`models/job_run.py`)
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| id | int \| None | 자동 증가 PK |
+| company_name | str | 회사명 |
+| job_title | str | 직무명 |
+| created_at | datetime | 생성 시각(UTC) |
 
-### 3.4 DNAResult
-역할: IVC 태스크를 DNA 주석 포함 TaskCard로 정규화.  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| job_run_id | string | Y | JobRun FK |
-| task_cards | array | Y | TaskCard 리스트 (Job AX Input Pack 1.3 동일) |
+### JobResearchResult (`models/job_run.py`)
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| job_run_id | int | JobRun FK |
+| raw_job_desc | str | 통합 직무 설명 텍스트 |
+| research_sources | list[dict] | 각 소스의 url/title/snippet/source_type/score 등 |
+| (동적) llm_raw_text | str \| None | UI 디버그용, DB 미저장 |
+| (동적) llm_error | str \| None | UI 디버그용, DB 미저장 |
+| (동적) llm_cleaned_json | str \| None | UI 디버그용, DB 미저장 |
 
-TaskCard (공통):  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| task_id | string | Y | 예: "T01" |
-| title | string | Y | 태스크 이름 |
-| phase | string | Y | IVC Phase (예: "SENSE") |
-| one_line_summary | string | N | 한 줄 요약 |
-| trigger | string | N | 시작 트리거 |
-| inputs | string | N | 주요 입력 |
-| action | string | N | 수행 액션 |
-| output | string | N | 산출물 |
-| dna | object | Y | Primitive/Domain/Mechanism |
+### JobResearchCollectResult (Stage 0.1, `models/job_run.py`)
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| job_run_id | int | JobRun FK |
+| raw_sources | list[dict] | 수집된 원본 소스(url/title/snippet/source_type/score) |
+| (동적) llm_raw_text | str \| None | UI 디버그용, DB 미저장 |
+| (동적) llm_error | str \| None | UI 디버그용, DB 미저장 |
+| (동적) llm_cleaned_json | str \| None | UI 디버그용, DB 미저장 |
 
-dna 서브필드:  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| primitive_lv1 | string | Y | 예: SENSE/DECIDE/TRANSFORM |
-| primitive_lv2 | string | Y | 세부 Primitive 코드 |
-| domain_lv1 | string | Y | Physical / Digital/Info / Financial … |
-| domain_lv2 | string | Y | 세부 Domain |
-| mechanism_m | string | Y | M1 / M2 등 |
-| mechanism_lv2 | string | Y | 세부 Mechanism 코드 |
+### LLMCallLog (`models/llm_log.py`, `infra/db.py::llm_call_logs`)
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| id | int | PK (AUTOINCREMENT) |
+| created_at | str | ISO 시각 |
+| job_run_id | int \| None | JobRun FK |
+| stage_name | str | 호출 스테이지 (예: stage0_collect, stage0_summarize) |
+| agent_name | str \| None | 에이전트/역할 이름 |
+| model_name | str | 호출 모델명 |
+| prompt_version | str \| None | 프롬프트 버전 태그 |
+| temperature | float \| None | 샘플링 설정 |
+| top_p | float \| None | 샘플링 설정 |
+| input_payload_json | str | LLM 입력 payload json 문자열 |
+| output_text_raw | str \| None | LLM 원문 텍스트 |
+| output_json_parsed | str \| None | 파싱된 JSON 문자열(성공 시) |
+| status | str | success \| json_parse_error \| api_error \| stub_fallback |
+| error_type | str \| None | 에러 클래스 |
+| error_message | str \| None | 에러 메시지 |
+| latency_ms | int \| None | 호출 소요(ms) |
+| tokens_prompt | int \| None | 입력 토큰 수(가능한 경우) |
+| tokens_completion | int \| None | 출력 토큰 수(가능한 경우) |
+| tokens_total | int \| None | 총 토큰 수(가능한 경우) |
 
-### 3.5 WorkflowResult
-역할: 워크플로우 구조와 Mermaid 코드.  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| job_run_id | string | Y | JobRun FK |
-| workflow_structure | object | Y | Stage/Stream/Task/Edge 구조 JSON |
-| mermaid_code | string | Y | ```mermaid ...``` 문자열 |
+## 3. IVC Pydantic 모델 (`core/schemas/common.py`)
 
-### 3.6 AXResult (AgentTable_for_AgentArchitect)
-역할: Agent Architect 입력용 요약 테이블.  
-구조: `stage_context`(object), `global_policies`(array of string), `agents`(array of object)
+### JobMeta
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| company_name | str | 회사명 |
+| job_title | str | 직무명 |
+| industry_context | str | 산업/맥락 |
+| business_goal | str \| None | 비즈니스 목표 |
 
-stage_context:  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| stage_name | string | Y | Stage 이름 |
-| business_goal | string | Y | Stage 비즈니스 목표 |
-| primary_kpis | array | N | KPI 리스트 |
-| pain_points | array | N | 문제/병목 리스트 |
-| primary_sheets | array | N | 주요 구글 시트 |
-| rag_usage | string | N | RAG 사용 방식 |
+### JobInput
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| job_meta | JobMeta | 직무 메타 |
+| raw_job_desc | str | Stage 0 결과 텍스트 |
 
-global_policies: string 리스트(스키마/언어/RAG/보안 규칙 등).
+### IVCAtomicTask
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| task_id | str | "T01" 형태 |
+| task_original_sentence | str | 근거가 된 문장/절 |
+| task_korean | str | "[대상] [동사]하기" |
+| task_english | str \| None | 영어 표현 |
+| notes | str \| None | 메모 |
 
-agents[]:  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| agent_id | string | Y | 에이전트 ID |
-| stage_stream_step | string | Y | Stage / Stream / Step |
-| agent_name | string | Y | 에이전트 이름 |
-| agent_type | string | Y | structuring / rag / generator / … |
-| execution_environment | string | Y | n8n_gpt_node / http_gpt_api / … |
-| n8n_workflow_id | string | N | 연결 n8n WF ID |
-| n8n_node_name | string | N | n8n 노드 이름 |
-| primary_sheet | string | N | 주요 시트 |
-| rag_required | boolean | Y | RAG 필요 여부 |
-| rag_pattern | string | N | 예: gemini_file_search_basic |
-| role_goal | string | Y | 역할/목표 |
-| inputs_summary | string | N | 입력 요약 |
-| outputs_summary | string | N | 출력 요약 |
-| core_actions_summary | string | N | 핵심 액션 요약 |
-| human_touchpoint_summary | string | N | HIL 요약 |
-| risks_summary | string | N | 리스크 요약 |
-| metrics_summary | string | N | 메트릭 요약 |
+### TaskExtractionResult
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| job_meta | JobMeta | 입력 그대로 복사 |
+| task_atoms | list[IVCAtomicTask] | 추출된 원자 과업 리스트 |
 
-### 3.7 AgentSpecsResult (AgentSpecs_for_PromptBuilder)
-역할: Prompt-Builder가 바로 소비할 에이전트 상세 스펙.  
-구조: `stage_context`, `global_policies`, `agents[]`(자세한 입력/출력/제약 포함)
+### IVCTaskListInput
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| job_meta | JobMeta | 입력 그대로 복사 |
+| task_atoms | list[IVCAtomicTask] | Task Extractor 출력 |
 
-agents[] 주요 필드:  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| agent_id | string | Y | AgentTable와 동일 |
-| agent_name | string | Y | 에이전트 이름 |
-| stage_stream_step | string | Y | Stage/Stream |
-| domain_context | string | N | 도메인 컨텍스트 |
-| agent_type | string | Y | structuring 등 |
-| execution_environment | string | Y | n8n_gpt_node 등 |
-| n8n_node_name | string | N | n8n 노드명 |
-| primary_sheet | string | N | 주요 시트 |
-| rag_enabled | boolean | Y | RAG 여부 |
-| file_search_corpus_hint | string/null | N | 파일 검색 힌트 |
-| role_and_goal | string | Y | 역할/목표 문장 |
-| success_metrics | array | N | 성공 기준 리스트 |
-| input_schema | array | Y | 입력 필드 정의 |
-| output_schema | array | Y | 출력 필드 정의 |
-| core_actions | array | N | 핵심 액션 |
-| tools_or_data_used | array | N | 사용 데이터/도구 |
-| constraints | array | N | 제약 사항 |
-| error_handling | string | N | 에러 처리 규칙 |
-| human_touchpoint | string | N | HIL 규칙 |
-| validator_dependencies | array | N | 검증 의존성 |
+### IVCTask
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| task_id | str | T## |
+| task_korean | str | 원자 과업 문장 |
+| task_original_sentence | str | 근거 문장 |
+| ivc_phase | str | P1_SENSE \| P2_DECIDE \| P3_EXECUTE_* \| P4_ASSURE |
+| ivc_exec_subphase | str \| None | EXECUTE 하위 구분(없으면 None) |
+| primitive_lv1 | str | IVC Primitive 1레벨 |
+| classification_reason | str | 간단한 근거 |
 
-input_schema / output_schema 공통 필드:  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| name | string | Y | 필드 이름 |
-| type | string | Y | string/object/enum 등 |
-| required | boolean | Y | 필수 여부 |
-| description | string | N | 필드 설명 |
-| example | any | N | 예시 값 |
-| source | string | N | 입력 출처 (input_schema) |
-| validation_rules | string | N | 검증 규칙 |
+### PhaseSummary
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| P1_SENSE | dict | {"count": int} |
+| P2_DECIDE | dict | {"count": int} |
+| P3_EXECUTE_TRANSFORM | dict | {"count": int} |
+| P3_EXECUTE_TRANSFER | dict | {"count": int} |
+| P3_EXECUTE_COMMIT | dict | {"count": int} |
+| P4_ASSURE | dict | {"count": int} |
 
-### 3.8 SkillResult
-역할: 스킬 카탈로그와 에이전트별 스킬 스펙.  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| job_run_id | string | Y | JobRun FK |
-| skill_catalog | array | N | SkillSpec 요약 리스트 |
-| agent_skill_specs | object | N | agent_id별 SkillSpec 묶음 |
+### PhaseClassificationResult
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| job_meta | JobMeta | 입력 복사 |
+| ivc_tasks | list[IVCTask] | 분류 결과 |
+| phase_summary | PhaseSummary | 집계 |
+| task_atoms | list[IVCAtomicTask] \| None | 편의상 첨부(Optional) |
 
-### 3.9 SkillSpec (개념)
-역할: 스킬 정의 자산.  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| skill_id | string | Y | 스킬 ID |
-| name | string | Y | 스킬명 |
-| description | string | N | 설명 |
-| mental_model | string | N | 멘탈 모델 |
-| frameworks | array | N | 프레임워크 텍스트 |
-| heuristics | array | N | 휴리스틱 |
-| checklist | array | N | 체크리스트 |
-| examples | array | N | 예시 ({good, bad}) |
+`IVCPipelineOutput = PhaseClassificationResult`
 
-### 3.10 PromptResult (LLMPrompts_for_n8n)
-역할: 실행용 프롬프트 묶음.  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| job_run_id | string | Y | JobRun FK |
-| stage_name | string | Y | Stage 이름 |
-| agents | array | Y | 에이전트별 프롬프트 |
+## 4. LLM 출력 JSON 규칙
+- **단일 JSON 객체만** 응답(추가 설명/코드블록 금지).
+- 허용 top-level 키  
+  - Task Extractor: ["job_meta", "task_atoms"]  
+  - Phase Classifier: ["job_meta", "raw_job_desc", "task_atoms", "ivc_tasks", "phase_summary"]
+- 문자열에 포함된 줄바꿈/펜스 제거를 위해 `_extract_json_from_text` 사용. JSONDecodeError 시 InvalidLLMJsonError로 래핑.
 
-agents[]:  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| agent_id | string | Y | AgentSpecs.agent_id |
-| execution_environment | string | Y | n8n_gpt_node / http_gpt_api / … |
-| prompt | string | N | n8n_gpt_node용 단일 프롬프트 |
-| system_prompt | string | N | http_gpt_api용 system |
-| user_prompt_template | string | N | http_gpt_api용 user 템플릿 |
+## 5. 예시 페이로드
 
-### 3.11 AgentRun
-역할: 샘플 실행 및 평가 로그.  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| job_run_id | string | Y | JobRun FK |
-| agent_id | string | Y | 실행한 에이전트 |
-| sample_input | object | Y | AgentSpec.input_schema 준수 |
-| sample_output | object | Y | AgentSpec.output_schema 준수 |
-| model_info | object | Y | 모델 호출 정보 |
-| model_info.model_name | string | Y | 모델명 |
-| model_info.tokens_input | number | N | 입력 토큰 |
-| model_info.tokens_output | number | N | 출력 토큰 |
-| model_info.estimated_cost | number | N | 추정 비용 |
-| eval_score | object | N | 평가 정보 |
-| eval_score.auto_score | number | N | 자동 점수 |
-| eval_score.auto_reason | string | N | 자동 평가 설명 |
-| eval_score.human_score | number/null | N | 사람 점수 |
+### Stage 0 출력 예시
+```json
+{
+  "job_run_id": 1,
+  "raw_job_desc": "AI 교육 컨설턴트는 고객사 HR과 요구사항을 정리하고, 교육 커리큘럼을 설계하여 제안서를 작성한다...",
+  "research_sources": [
+    {
+      "url": "https://example.com/jd",
+      "title": "Example JD",
+      "snippet": "Responsibilities: manage client workshops...",
+      "source_type": "jd",
+      "score": 0.5
+    }
+  ]
+}
+```
 
-### 3.12 Job AX Input Pack
-역할: Workflow Architect 입력 패키지.  
-| 필드명 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| job_meta | object | Y | 직무 메타 |
-| job_meta.job_title | string | Y | 직무명 |
-| job_meta.industry_context | string | Y | 산업/맥락 |
-| job_meta.business_goal | string | N | 상위 목표 |
-| workflow_blueprint_mermaid | string | N | mermaid 코드 문자열 |
-| task_cards | array | Y | DNAResult와 동일 TaskCard |
-
-## 4. 엔티티 간 관계 & 참조 구조
-| From 엔티티 | To 엔티티 | 관계/키 | 설명 |
-| --- | --- | --- | --- |
-| JobResearch | JobRun | job_run_id(FK) | 실행별 리서치 연결 |
-| IVCResult | JobRun | job_run_id(FK) | 실행별 IVC 결과 연결 |
-| DNAResult | JobRun | job_run_id(FK) | 실행별 DNA 결과 연결 |
-| WorkflowResult | JobRun | job_run_id(FK) | 실행별 워크플로우 결과 연결 |
-| AXResult | JobRun | job_run_id(FK) | 실행별 AgentTable 연결 |
-| AgentSpecsResult | JobRun | job_run_id(FK) | 실행별 AgentSpecs 연결 |
-| SkillResult | JobRun | job_run_id(FK) | 실행별 스킬 결과 연결 |
-| PromptResult | JobRun | job_run_id(FK) | 실행별 프롬프트 연결 |
-| AgentRun | JobRun | job_run_id(FK) | 실행별 평가 연결 |
-| AgentSpecsResult | AXResult | agent_id, stage_context 등 | AgentTable 기반 상세화 |
-| PromptResult | AgentSpecsResult | agent_id | AgentSpec → 프롬프트 생성 |
-| SkillResult | AgentSpecsResult | agent_id | 에이전트별 스킬 매핑 |
-| AgentRun | PromptResult/AgentSpecsResult | agent_id | 프롬프트/스펙으로 실행 |
-
-## 5. Codex용 구현 힌트 (코드 관점 요약)
-- 각 엔티티를 Python dataclass 또는 Pydantic 모델로 매핑 시 공통 키 `job_run_id`와 타임스탬프를 표준화; TaskCard, agents[], input_schema/output_schema는 재사용 타입으로 정의.  
-- 단계별 함수 시그니처 예: `run_stage_0_job_research(job_run: JobRun) -> JobResearch`, `run_stage_1_ivc(job_research: JobResearch) -> IVCResult`, `run_stage_2_dna(ivc: IVCResult) -> DNAResult`, `run_stage_5_ax(workflow: WorkflowResult, job_pack: JobAXInputPack) -> AXResult`, `run_stage_6_agent_arch(ax: AXResult) -> AgentSpecsResult`, `run_stage_8_prompt_builder(agent_specs: AgentSpecsResult, skills: SkillResult) -> PromptResult`, `run_stage_9_runner(prompt_result: PromptResult, sample_input) -> AgentRun`.  
-- AgentTable_for_AgentArchitect → AgentSpecs_for_PromptBuilder는 agents[]를 그대로 이어가며 필드 확장(입출력/제약)만 추가한다.  
-- SkillSpec 필드는 텍스트 자산 중심(mental_model, frameworks, heuristics, checklist, examples)으로, 스키마 확정 전까지는 옵션 필드로 취급.  
-- PromptResult는 실행 환경별 필드가 상이하므로 `execution_environment` 기준으로 required 필드 분기 처리.
-
-핵심 요약(구현자용):  
-- 모든 결과 엔티티는 `job_run_id`로 연결되며, Stage 5~8은 `agent_id`로 연쇄된다.  
-- TaskCard 스키마는 DNAResult와 Job AX Input Pack에서 동일하게 재사용된다.  
-- AgentTable → AgentSpecs → PromptResult는 agents[]를 확장하는 패턴이다.  
-- Runner는 AgentSpecs의 입출력 스키마를 그대로 따르는 `sample_input`/`sample_output`을 기록한다.
+### Stage 1 출력 예시 (PhaseClassificationResult)
+```json
+{
+  "job_meta": {
+    "company_name": "Acme",
+    "job_title": "Data Analyst",
+    "industry_context": "",
+    "business_goal": null
+  },
+  "task_atoms": [
+    {"task_id": "T01", "task_original_sentence": "데이터를 수집한다", "task_korean": "데이터 수집하기", "task_english": "collect data", "notes": null}
+  ],
+  "ivc_tasks": [
+    {"task_id": "T01", "task_korean": "데이터 수집하기", "task_original_sentence": "데이터를 수집한다", "ivc_phase": "P1_SENSE", "ivc_exec_subphase": null, "primitive_lv1": "SENSE", "classification_reason": "정보 수집 활동"}
+  ],
+  "phase_summary": {
+    "P1_SENSE": {"count": 1},
+    "P2_DECIDE": {"count": 0},
+    "P3_EXECUTE_TRANSFORM": {"count": 0},
+    "P3_EXECUTE_TRANSFER": {"count": 0},
+    "P3_EXECUTE_COMMIT": {"count": 0},
+    "P4_ASSURE": {"count": 0}
+  }
+}
+```

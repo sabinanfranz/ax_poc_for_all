@@ -22,14 +22,19 @@ def test_run_job_research_saves_to_db(tmp_path, monkeypatch):
     db.set_db_path(str(db_path))
 
     job_run = db.create_job_run("Acme", "Analyst")
-    fake_output = {
+    fake_collect = {"raw_sources": [{"url": "http://example.com", "title": "ex", "snippet": "s", "source_type": "jd", "score": 1}]}
+    fake_summarize = {
         "raw_job_desc": "Test desc",
         "research_sources": [{"url": "http://example.com", "title": "ex", "snippet": "s", "source_type": "jd", "score": 1}],
     }
 
     monkeypatch.setattr(
-        "ax_agent_factory.infra.llm_client.call_gemini_job_research",
-        lambda **kwargs: fake_output,
+        "ax_agent_factory.infra.llm_client.call_job_research_collect",
+        lambda **kwargs: fake_collect,
+    )
+    monkeypatch.setattr(
+        "ax_agent_factory.infra.llm_client.call_job_research_summarize",
+        lambda **kwargs: fake_summarize,
     )
 
     result = research.run_job_research(job_run)
@@ -38,13 +43,21 @@ def test_run_job_research_saves_to_db(tmp_path, monkeypatch):
     loaded = db.get_job_research_result(job_run.id)
     assert loaded is not None
     assert loaded.research_sources[0]["url"] == "http://example.com"
+    # collect cache stored
+    collect_loaded = db.get_job_research_collect_result(job_run.id)
+    assert collect_loaded is not None
+    assert collect_loaded.raw_sources[0]["title"] == "ex"
 
 
 def test_run_job_research_requires_id(monkeypatch):
     job_run = JobRun(id=None, company_name="Acme", job_title="Analyst", created_at=datetime.utcnow())
     fake_output = {"raw_job_desc": "", "research_sources": []}
     monkeypatch.setattr(
-        "ax_agent_factory.infra.llm_client.call_gemini_job_research",
+        "ax_agent_factory.infra.llm_client.call_job_research_collect",
+        lambda **kwargs: {"raw_sources": []},
+    )
+    monkeypatch.setattr(
+        "ax_agent_factory.infra.llm_client.call_job_research_summarize",
         lambda **kwargs: fake_output,
     )
     with pytest.raises(ValueError):
@@ -56,6 +69,7 @@ def test_run_job_research_carries_llm_debug(monkeypatch, tmp_path):
     db.set_db_path(str(db_path))
 
     job_run = db.create_job_run("Acme", "Analyst")
+    fake_collect = {"raw_sources": []}
     fake_output = {
         "raw_job_desc": "desc",
         "research_sources": [],
@@ -64,7 +78,11 @@ def test_run_job_research_carries_llm_debug(monkeypatch, tmp_path):
     }
 
     monkeypatch.setattr(
-        "ax_agent_factory.infra.llm_client.call_gemini_job_research",
+        "ax_agent_factory.infra.llm_client.call_job_research_collect",
+        lambda **kwargs: fake_collect,
+    )
+    monkeypatch.setattr(
+        "ax_agent_factory.infra.llm_client.call_job_research_summarize",
         lambda **kwargs: fake_output,
     )
 

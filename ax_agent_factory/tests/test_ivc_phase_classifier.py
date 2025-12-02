@@ -45,11 +45,13 @@ def test_phase_classifier_assigns_expected_phases():
             "industry_context": "Tech",
             "business_goal": None,
         },
+        raw_job_desc="데이터를 수집하고 보고서를 작성한다.",
         task_atoms=task_atoms,
     )
 
     classifier_output = {
         "job_meta": task_list_input.job_meta.model_dump(),
+        "raw_job_desc": task_list_input.raw_job_desc,
         "ivc_tasks": [
             {
                 "task_id": "T01",
@@ -90,3 +92,4 @@ def test_phase_classifier_assigns_expected_phases():
     assert result.ivc_tasks[0].ivc_phase == "P1_SENSE"
     assert result.ivc_tasks[1].ivc_exec_subphase == "TRANSFORM"
     assert result.phase_summary.P3_EXECUTE_TRANSFORM["count"] == 1
+    assert result.raw_job_desc == task_list_input.raw_job_desc
