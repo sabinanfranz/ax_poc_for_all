@@ -10,7 +10,7 @@
 task_atoms 배열 안에 구조화된 JSON으로 반환합니다.
 
 이 결과는 다음 단계(IVC-B Phase Classifier)의 입력으로 사용되며,
-여기서는 어떤 Phase/Primitive 라벨도 붙이지 않습니다.
+여기서는 어떤 Phase/Primit  ive 라벨도 붙이지 않습니다.
 
 [입력 JSON 스키마]
 - job_meta: 회사명, 직무명, 산업/맥락, 비즈니스 목표 등의 메타 정보
@@ -75,7 +75,6 @@ task_atoms 배열 안에 구조화된 JSON으로 반환합니다.
     "industry": "에듀테크",
     "business_goal": "대기업 HR 대상 B2B 교육 매출 확대"
   },
-  "raw_job_desc": "고객사의 HR 담당자와 미팅을 진행하고 요구사항을 정리한다. 요구사항을 바탕으로 교육 커리큘럼을 설계하고 제안서를 작성한다.",
   "task_atoms": [
     {
       "task_id": "T01",

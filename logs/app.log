@@ -425,3 +425,338 @@ json.decoder.JSONDecodeError: Expecting ',' delimiter: line 17 column 6 (char 12
 [2025-12-02 09:03:13,831] [INFO] [ax_agent_factory.infra.llm_client] LLMClient.call invoked with model=gpt-4.1
 [2025-12-02 09:03:13,844] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC PhaseClassifier finished. ivc_tasks=1
 [2025-12-02 09:03:13,844] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline finished.
+[2025-12-02 09:13:23,463] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 09:13:25,646] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 09:13:25,646] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:14:01,044] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:14:01,068] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=4320
+[2025-12-02 09:14:01,093] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 09:14:03,725] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 09:14:03,732] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:14:30,460] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:14:30,460] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=3844
+[2025-12-02 09:17:23,395] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 09:17:24,889] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 09:17:24,890] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:17:59,425] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:17:59,434] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=5297
+[2025-12-02 09:17:59,464] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 09:18:00,945] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 09:18:00,946] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:18:29,587] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:18:29,589] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=5089
+[2025-12-02 09:19:13,748] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 09:19:15,207] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 09:19:15,208] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:19:41,254] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:19:41,270] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=4842
+[2025-12-02 09:19:41,308] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 09:19:42,768] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 09:19:42,769] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:20:13,320] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:20:13,322] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=3748
+[2025-12-02 09:20:13,364] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=브랜드 매니저
+[2025-12-02 09:20:13,365] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-02 09:20:14,850] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-02 09:20:14,852] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:21:15,269] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:21:15,272] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=17370
+[2025-12-02 09:21:15,273] [WARNING] [ax_agent_factory.infra.llm_client] Task Extractor JSON parsing failed; returning stub
+[2025-12-02 09:21:15,298] [ERROR] [ax_agent_factory.core.ivc.task_extractor] Task Extractor unexpected error
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\core\ivc\task_extractor.py", line 46, in run
+    result.llm_raw_text = llm_output.get("_raw_text")  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\site-packages\pydantic\main.py", line 1032, in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\site-packages\pydantic\main.py", line 1079, in _setattr_handler
+    raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+ValueError: "TaskExtractionResult" object has no field "llm_raw_text"
+[2025-12-02 09:31:28,817] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 09:31:30,537] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 09:31:30,538] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:31:55,505] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:31:55,519] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=7445
+[2025-12-02 09:31:55,555] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 09:31:57,052] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 09:31:57,054] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:32:27,584] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:32:27,587] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=5172
+[2025-12-02 09:32:27,636] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=브랜드 매니저
+[2025-12-02 09:32:27,636] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-02 09:32:29,168] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-02 09:32:29,169] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:33:25,215] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:33:25,216] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=22783
+[2025-12-02 09:33:25,218] [WARNING] [ax_agent_factory.infra.llm_client] Task Extractor JSON parsing failed; returning stub
+[2025-12-02 09:33:25,242] [ERROR] [ax_agent_factory.core.ivc.task_extractor] Task Extractor unexpected error
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\core\ivc\task_extractor.py", line 46, in run
+    result.llm_raw_text = llm_output.get("_raw_text")  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\site-packages\pydantic\main.py", line 1032, in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\site-packages\pydantic\main.py", line 1079, in _setattr_handler
+    raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+ValueError: "TaskExtractionResult" object has no field "llm_raw_text"
+[2025-12-02 09:33:43,989] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 09:33:45,507] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 09:33:45,507] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:34:11,905] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:34:11,918] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=3681
+[2025-12-02 09:34:11,957] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 09:34:13,412] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 09:34:13,412] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:34:42,304] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:34:42,304] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=4186
+[2025-12-02 09:35:58,448] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 09:36:00,527] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 09:36:00,528] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:36:22,604] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:36:22,610] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=3214
+[2025-12-02 09:36:22,648] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 09:36:24,227] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 09:36:24,228] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:36:48,112] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:36:48,120] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=3876
+[2025-12-02 09:36:48,161] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=브랜드 매니저
+[2025-12-02 09:36:48,161] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-02 09:36:49,691] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-02 09:36:49,692] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:37:44,814] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:37:44,814] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=19319
+[2025-12-02 09:37:44,814] [WARNING] [ax_agent_factory.infra.llm_client] Task Extractor JSON parsing failed; returning stub
+[2025-12-02 09:37:44,844] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=1
+[2025-12-02 09:37:44,844] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC TaskExtractor finished. task_atoms=1
+[2025-12-02 09:37:44,844] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-02 09:37:45,566] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-02 09:37:45,566] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:37:56,467] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:37:56,483] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=1971
+[2025-12-02 09:37:56,500] [ERROR] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier unexpected error
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\core\ivc\phase_classifier.py", line 44, in run
+    result = parse_phase_classification_dict(llm_output)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\core\ivc\phase_classifier.py", line 102, in parse_phase_classification_dict
+    return PhaseClassificationResult(**payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\admin\AppData\Local\Programs\Python\Python312\Lib\site-packages\pydantic\main.py", line 250, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 6 validation errors for PhaseClassificationResult
+ivc_tasks.0.task_korean
+  Field required [type=missing, input_value={'task_id': 'T01', 'phase...에 해당합니다.'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+ivc_tasks.0.task_original_sentence
+  Field required [type=missing, input_value={'task_id': 'T01', 'phase...에 해당합니다.'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+ivc_tasks.0.ivc_phase
+  Field required [type=missing, input_value={'task_id': 'T01', 'phase...에 해당합니다.'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+ivc_tasks.0.ivc_exec_subphase
+  Field required [type=missing, input_value={'task_id': 'T01', 'phase...에 해당합니다.'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+ivc_tasks.0.primitive_lv1
+  Field required [type=missing, input_value={'task_id': 'T01', 'phase...에 해당합니다.'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+ivc_tasks.0.classification_reason
+  Field required [type=missing, input_value={'task_id': 'T01', 'phase...에 해당합니다.'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing
+[2025-12-02 09:56:11,377] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 09:56:14,350] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 09:56:14,350] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:56:41,060] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:56:41,073] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=6145
+[2025-12-02 09:56:41,120] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 09:56:43,755] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 09:56:43,755] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:57:13,783] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:57:13,789] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=5907
+[2025-12-02 09:57:32,424] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 09:57:33,935] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 09:57:33,935] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:58:10,636] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:58:10,639] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=6488
+[2025-12-02 09:58:10,669] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 09:58:12,197] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 09:58:12,197] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:58:54,251] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:58:54,256] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=5440
+[2025-12-02 09:58:54,281] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=브랜드 매니저
+[2025-12-02 09:58:54,281] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-02 09:58:54,998] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-02 09:58:54,998] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 09:59:59,358] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 09:59:59,358] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=7335
+[2025-12-02 09:59:59,366] [WARNING] [ax_agent_factory.infra.llm_client] Task Extractor JSON parsing failed; returning stub
+[2025-12-02 10:00:04,914] [ERROR] [ax_agent_factory.infra.llm_client] Failed to persist LLM call log
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 581, in call_task_extractor
+    raise InvalidLLMJsonError("Failed to parse Task Extractor JSON", raw_text=raw_text, json_text=cleaned)
+ax_agent_factory.infra.llm_client.InvalidLLMJsonError: Failed to parse Task Extractor JSON
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 1095, in _safe_save_llm_log
+    db.save_llm_call_log(log)
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\db.py", line 245, in save_llm_call_log
+    conn.commit()
+sqlite3.OperationalError: database is locked
+[2025-12-02 10:00:04,921] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=1
+[2025-12-02 10:00:04,921] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC TaskExtractor finished. task_atoms=1
+[2025-12-02 10:00:04,921] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-02 10:00:06,431] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-02 10:00:06,431] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:00:18,028] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:00:18,061] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=1984
+[2025-12-02 10:00:25,090] [ERROR] [ax_agent_factory.infra.llm_client] Failed to persist LLM call log
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\llm_client.py", line 1095, in _safe_save_llm_log
+    db.save_llm_call_log(log)
+  File "C:\Users\admin\Desktop\ax_poc\ax_agent_factory\infra\db.py", line 215, in save_llm_call_log
+    cur.execute(
+sqlite3.OperationalError: database is locked
+[2025-12-02 10:00:25,094] [WARNING] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier validation failed; returning stub
+[2025-12-02 10:00:25,095] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC PhaseClassifier finished. ivc_tasks=1
+[2025-12-02 10:00:25,095] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline finished.
+[2025-12-02 10:00:53,396] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-02 10:00:54,904] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 10:00:54,905] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:01:23,971] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:01:24,005] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=6994
+[2025-12-02 10:01:24,041] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-02 10:01:25,616] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 10:01:25,617] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:01:59,345] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:01:59,348] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=4689
+[2025-12-02 10:01:59,385] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=브랜드 매니저
+[2025-12-02 10:01:59,385] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-02 10:02:00,916] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-02 10:02:00,917] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:02:43,399] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:02:43,402] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=17324
+[2025-12-02 10:02:43,424] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=57
+[2025-12-02 10:02:43,425] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC TaskExtractor finished. task_atoms=57
+[2025-12-02 10:02:43,425] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-02 10:02:44,961] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-02 10:02:44,961] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:03:46,169] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:03:46,172] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=17466
+[2025-12-02 10:03:46,175] [WARNING] [ax_agent_factory.infra.llm_client] Phase Classifier JSON parsing failed; returning stub
+[2025-12-02 10:03:46,208] [INFO] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier parsing succeeded. ivc_task_count=57
+[2025-12-02 10:03:46,209] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC PhaseClassifier finished. ivc_tasks=57
+[2025-12-02 10:03:46,210] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline finished.
+[2025-12-02 10:16:06,739] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=과학기술정보통신부, job_title=5급 사무관
+[2025-12-02 10:16:11,789] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 10:16:11,790] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:16:37,060] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:16:37,069] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=4127
+[2025-12-02 10:16:37,107] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=5급 사무관
+[2025-12-02 10:16:39,439] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 10:16:39,440] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:17:04,067] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:17:04,073] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=3870
+[2025-12-02 10:17:37,613] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=과학기술정보통신부, job_title=5급 사무관
+[2025-12-02 10:17:39,108] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 10:17:39,109] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:18:24,035] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:18:24,047] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=7383
+[2025-12-02 10:18:24,080] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=5급 사무관
+[2025-12-02 10:18:25,572] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 10:18:25,572] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:18:58,897] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:18:58,900] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=5196
+[2025-12-02 10:18:58,946] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=5급 사무관
+[2025-12-02 10:18:58,947] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=5급 사무관, company_name=과학기술정보통신부
+[2025-12-02 10:19:03,704] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-02 10:19:03,720] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:20:03,092] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:20:03,092] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=14590
+[2025-12-02 10:20:03,107] [WARNING] [ax_agent_factory.infra.llm_client] Task Extractor JSON parsing failed; returning stub
+[2025-12-02 10:20:03,107] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=1
+[2025-12-02 10:20:03,107] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC TaskExtractor finished. task_atoms=1
+[2025-12-02 10:20:03,107] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=5급 사무관, company_name=과학기술정보통신부
+[2025-12-02 10:20:03,855] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-02 10:20:03,855] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:20:14,455] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:20:14,456] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=2172
+[2025-12-02 10:20:14,470] [WARNING] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier validation failed; returning stub
+[2025-12-02 10:20:14,471] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC PhaseClassifier finished. ivc_tasks=1
+[2025-12-02 10:20:14,471] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline finished.
+[2025-12-02 10:28:45,313] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=과학기술정보통신부, job_title=5급 사무관
+[2025-12-02 10:28:48,738] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 10:28:48,740] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:29:19,452] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:29:19,562] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=4925
+[2025-12-02 10:29:20,346] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=5급 사무관
+[2025-12-02 10:29:34,056] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 10:29:34,059] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:30:03,461] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:30:03,461] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=4680
+[2025-12-02 10:30:18,733] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=과학기술정보통신부, job_title=5급 사무관
+[2025-12-02 10:30:32,563] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 10:30:32,578] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:31:00,410] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:31:00,458] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=3674
+[2025-12-02 10:31:00,564] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=5급 사무관
+[2025-12-02 10:31:08,658] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 10:31:08,658] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:31:32,334] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:31:32,340] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=3902
+[2025-12-02 10:31:32,436] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=5급 사무관
+[2025-12-02 10:31:32,439] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=5급 사무관, company_name=과학기술정보통신부
+[2025-12-02 10:31:44,458] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-02 10:31:44,460] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:32:15,171] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:32:15,202] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=10323
+[2025-12-02 10:32:15,249] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=37
+[2025-12-02 10:32:15,250] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC TaskExtractor finished. task_atoms=37
+[2025-12-02 10:32:15,251] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=5급 사무관, company_name=과학기술정보통신부
+[2025-12-02 10:32:20,649] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-02 10:32:20,649] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:33:02,976] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:33:02,983] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=15994
+[2025-12-02 10:33:03,020] [WARNING] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier validation failed; returning stub
+[2025-12-02 10:33:03,023] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC PhaseClassifier finished. ivc_tasks=37
+[2025-12-02 10:33:03,024] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline finished.
+[2025-12-02 10:34:00,150] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=과학기술정보통신부, job_title=5급 사무관
+[2025-12-02 10:34:01,682] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 10:34:01,683] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:34:19,197] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:34:19,545] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=3310
+[2025-12-02 10:34:19,577] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=5급 사무관
+[2025-12-02 10:34:21,035] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 10:34:21,036] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:34:42,649] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:34:42,664] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=3531
+[2025-12-02 10:35:01,987] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=과학기술정보통신부, job_title=5급 사무관
+[2025-12-02 10:35:07,113] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-02 10:35:07,117] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:35:33,664] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:35:33,674] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=6503
+[2025-12-02 10:35:35,507] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=5급 사무관
+[2025-12-02 10:35:49,255] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-02 10:35:49,259] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:36:16,218] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:36:16,231] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=5103
+[2025-12-02 10:36:16,346] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline started for job_title=5급 사무관
+[2025-12-02 10:36:16,350] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=5급 사무관, company_name=과학기술정보통신부
+[2025-12-02 10:36:26,091] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-02 10:36:26,095] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:37:24,393] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:37:24,393] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=6745
+[2025-12-02 10:37:24,393] [WARNING] [ax_agent_factory.infra.llm_client] Task Extractor JSON parsing failed; returning stub
+[2025-12-02 10:37:24,412] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=1
+[2025-12-02 10:37:24,413] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC TaskExtractor finished. task_atoms=1
+[2025-12-02 10:37:24,413] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=5급 사무관, company_name=과학기술정보통신부
+[2025-12-02 10:37:25,132] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-02 10:37:25,132] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-02 10:37:29,881] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-02 10:37:29,883] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=835
+[2025-12-02 10:37:29,903] [WARNING] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier validation failed; returning stub
+[2025-12-02 10:37:29,904] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC PhaseClassifier finished. ivc_tasks=1
+[2025-12-02 10:37:29,904] [INFO] [ax_agent_factory.core.ivc.pipeline] IVC pipeline finished.

@@ -76,3 +76,26 @@ def test_task_extractor_parses_wrapped_json(job_input, wrapped_output_builder):
     assert len(result.task_atoms) == 2
     assert all(atom.task_id.startswith("T0") for atom in result.task_atoms)
     assert all(atom.task_korean.endswith("하기") for atom in result.task_atoms)
+
+
+def test_task_extractor_records_llm_debug(job_input):
+    payload = _make_payload(job_input)
+    raw_output = "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
+    extractor = IVCTaskExtractor(llm_client=FakeLLMClient([raw_output]))
+
+    result = extractor.run(job_input)
+
+    assert result.llm_raw_text == raw_output
+    assert result.llm_cleaned_json is not None
+    assert result.llm_error is None
+
+
+def test_task_extractor_sanitizes_trailing_brace(job_input):
+    payload = _make_payload(job_input)
+    broken = json.dumps(payload, ensure_ascii=False).replace('"raw_job_desc": "', '"raw_job_desc": "').replace('", "task_atoms"', '"}, "task_atoms"')
+    raw_output = f"```json\n{broken}\n```"
+    extractor = IVCTaskExtractor(llm_client=FakeLLMClient([raw_output]))
+
+    result = extractor.run(job_input)
+
+    assert len(result.task_atoms) == 2

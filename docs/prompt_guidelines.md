@@ -9,18 +9,18 @@
 - **프롬프트 저장 위치**: `ax_agent_factory/prompts/*.txt`, 로더 `infra/prompts.load_prompt`(LRU 캐시).
 
 ## Stage별 가이드
-- **Stage 0 – Job Research (`prompts/job_research.txt`)**
-  - web_browsing을 전제로 하고, “자격 요건/복리후생 제외, 업무/프로젝트/툴 중심”을 반복 강조.
-  - `raw_job_desc`에 모든 중요한 업무 정보를 재서술하도록 “Coverage & Integration” 규칙 명시.
-  - 출력 키: `raw_job_desc`, `research_sources[]` 외 추가 금지.
+- **Stage 0 – Job Research**
+  - 0.1 Collect (`prompts/job_research_collect.txt`): web_browsing 전제, 업무/프로젝트/툴 중심 소스만 수집.
+  - 0.2 Summarize (`prompts/job_research_summarize.txt`): `raw_sources`를 통합해 `raw_job_desc`를 작성하고 핵심 `research_sources`만 남김.
+  - 출력 키는 각각 `raw_sources` / `raw_job_desc`, `research_sources`로 제한.
 - **Stage 1-A – IVC Task Extractor (`prompts/ivc_task_extractor.txt`)**
-  - 과업 표현을 `[대상] [동사]하기`로 통일, 행동만 남기고 목적 제거.
-  - 출력 키: `job_meta`, `task_atoms[]`(task_id, task_original_sentence, task_korean, task_english, notes).
+  - 과업 표현을 `[대상] [동사]하기`로 통일, 목적 제거.
+  - 출력 키: `job_meta`, `task_atoms[]`(task_id, task_original_sentence, task_korean, task_english, notes). `raw_job_desc`를 출력에 포함하지 않도록 명시.
 - **Stage 1-B – IVC Phase Classifier (`prompts/ivc_phase_classifier.txt`)**
   - 입력의 `job_meta/raw_job_desc/task_atoms`를 그대로 복사하도록 명시.
   - 출력 키: `job_meta`, `raw_job_desc`, `task_atoms`, `ivc_tasks`, `phase_summary` 외 금지.
   - Phase 정의/규칙을 짧게 제시하고, reason을 한국어 1~2문장으로 요구.
-  - 주의: 프롬프트 예시는 `phase/reason`을 사용하지만, 코드 스키마는 `ivc_phase/ivc_exec_subphase/primitive_lv1/classification_reason`를 기대한다. 실제 호출용 프롬프트를 조정해 스키마에 맞춰야 한다.
+  - 주의: 예시는 `phase/reason` 등을 사용하지만, 스키마는 `ivc_phase/ivc_exec_subphase/primitive_lv1/classification_reason`을 기대하므로 프롬프트를 스키마에 맞춰 유지.
 
 ## 버전/변경 관리
 - 프롬프트 변경 시: 변경 요약을 `docs/iteration_log.md`에 기록(날짜, 이유, 영향).

@@ -10,6 +10,8 @@
 - `troubleshooting.md` : LLM/경로/DB 관련 자주 묻는 오류 해결
 - `progress.md` : Stage별 진행 상태 및 다음 스텝
 - `prompt_guidelines.md` : 프롬프트 작성/관리 규칙
+- `parsing_guide.md` : LLM JSON 파싱/샌드박싱/스텁 가이드
+- `stage_runner.md` : Stage 공통 실행 패턴 정의
 - `gemini_models.md` : 현재 사용 모델과 연결 체크리스트
 - `iteration_log.md` : 변경 로그 표
 - `versions/prd_v1.1.md` : 과거 PRD 스냅샷

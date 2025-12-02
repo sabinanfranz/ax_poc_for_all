@@ -13,7 +13,6 @@ from ax_agent_factory.core.schemas.common import (
     JobInput,
     TaskExtractionResult,
 )
-from ax_agent_factory.infra.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +29,8 @@ def run_ivc_pipeline(
     3) 최종 IVCPipelineOutput 반환
     """
     logger.info("IVC pipeline started for job_title=%s", job_input.job_meta.job_title)
-    shared_llm = llm_client or LLMClient()
-    extractor = IVCTaskExtractor(llm_client=shared_llm)
-    classifier = IVCPhaseClassifier(llm_client=shared_llm)
+    extractor = IVCTaskExtractor(llm_client=llm_client)
+    classifier = IVCPhaseClassifier(llm_client=llm_client)
 
     extraction_result: TaskExtractionResult = extractor.run(job_input)
     logger.info("IVC TaskExtractor finished. task_atoms=%d", len(extraction_result.task_atoms))

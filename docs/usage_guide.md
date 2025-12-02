@@ -10,7 +10,7 @@ source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
 ```
 - 필수/선택 환경변수  
-  - `GOOGLE_API_KEY`: 없으면 Stage 0이 스텁으로 동작(데모용).  
+  - `GOOGLE_API_KEY`: 없으면 Stage 0/1이 스텁으로 동작(데모용).  
   - `GEMINI_MODEL`: 기본 `gemini-2.5-flash` (web_browsing 지원).  
   - `AX_DB_PATH`: 기본 `data/ax_factory.db` (경로 없으면 자동 생성).  
 - .env 로드 예시(PowerShell):
@@ -29,13 +29,13 @@ streamlit run ax_agent_factory/app.py
 - 로그: `logs/app.log`가 자동 생성되며, UI 하단 expander에서 tail 확인 가능.
 
 ## 3) 결과 확인 (탭 안내)
-- **Stage 0 탭**
-  - Job Research 결과: `raw_job_desc`, `research_sources` 확인.
-  - LLM 응답/에러: `_raw_text`/`llm_error` 확인(파싱 실패 시 스텁/에러 노출).
+- **Stage 0 탭** (0.1 Collect / 0.2 Summarize)
+  - 0.1: `raw_sources` + LLM raw/cleaned/error
+  - 0.2: `raw_job_desc`, `research_sources` + LLM raw/cleaned/error
 - **Stage 1 탭**
-  - 실행/결과: Task Extractor의 `task_atoms[]`, Phase Classifier의 `ivc_tasks[]`, `phase_summary`.
-  - 설명/IO: 입력/프롬프트/오케스트레이션 경로 안내.
-- LLM 키가 없거나 `LLMClient.call` 미구현 상태에서는 Stage 1이 스텁 결과를 보여준다(동작 검증용).
+  - 1-A Task Extractor: `task_atoms[]` + LLM raw/cleaned/error
+  - 1-B Phase Classifier: `ivc_tasks[]`, `phase_summary`, `task_atoms` + LLM raw/cleaned/error
+- LLM 키/SDK가 없으면 Stage 0/1 모두 스텁으로 동작하며, `llm_error`에 사유가 남습니다.
 
 ## 4) 테스트 실행
 ```bash

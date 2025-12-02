@@ -21,10 +21,9 @@
   - 캐시: job_run_id 기준 SQLite 저장/조회.
 - **Stage 1: IVC (구현)**
   - 입력: Stage 0 raw_job_desc + job_meta.
-  - 1-A Task Extractor: `core/ivc/task_extractor.py` + `prompts/ivc_task_extractor.txt` → `task_atoms[]`.
-  - 1-B Phase Classifier: `core/ivc/phase_classifier.py` + `prompts/ivc_phase_classifier.txt` → `ivc_tasks[]`, `phase_summary`.
-  - 공통 규칙: LLM JSON 하나만 응답, 코드블록 금지, 스텁 fallback 제공.
-  - 현재 상태: LLMClient.call은 미구현으로 기본 스텁 결과를 반환(테스트/데모용). 실제 모델 연결 시 LLMClient 확장 필요.
+  - 1-A Task Extractor: `call_task_extractor`(Gemini, 키 없으면 스텁) + `prompts/ivc_task_extractor.txt` → `task_atoms[]`.
+  - 1-B Phase Classifier: `call_phase_classifier`(Gemini, 키 없으면 스텁) + `prompts/ivc_phase_classifier.txt` → `ivc_tasks[]`, `phase_summary`.
+  - 공통 규칙: LLM JSON 하나만 응답, 코드블록 금지, 경미한 JSON 오류는 sanitizer/파서가 흡수, 그래도 실패 시 스텁 fallback.
 - **Stage 2~3 이후 (미구현/설계)**
   - Stage 2 DNA: Primitive/Domain/Mechanism 주석.
   - Stage 3 Workflow: Stage/Stream/Task 구조화 + Mermaid.
@@ -49,6 +48,6 @@
 - 문서화: docs/*.md와 코드가 1:1로 대응되고, 비개발자도 실행 경로를 이해 가능.
 
 ## 7. 로드맵(요약)
-- 단기(다음 스프린트): Stage 1 결과 지속화(DB), LLMClient.call 실제 구현, JSON 검증 강화/리트라이.
+- 단기(다음 스프린트): Stage 1 결과 지속화(DB), JSON 검증/리트라이 고도화, LLM 호출 옵션화(모델/파라미터).
 - 중기: Stage 2 DNA, Stage 3 Workflow 스펙/모델/프롬프트 확정 및 구현.
 - 장기: Stage 4~9(AX/Agent/Skill/Prompt/Runner) 구현, 멀티 모델/평가/관측성/배포 자동화.

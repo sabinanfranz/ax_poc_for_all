@@ -38,6 +38,9 @@ class TaskExtractionResult(BaseModel):
 
     job_meta: JobMeta
     task_atoms: List[IVCAtomicTask]
+    llm_raw_text: Optional[str] = None
+    llm_cleaned_json: Optional[str] = None
+    llm_error: Optional[str] = None
 
 
 class IVCTaskListInput(BaseModel):
@@ -79,6 +82,9 @@ class PhaseClassificationResult(BaseModel):
     ivc_tasks: List[IVCTask]
     phase_summary: PhaseSummary
     task_atoms: Optional[List[IVCAtomicTask]] = None
+    llm_raw_text: Optional[str] = None
+    llm_cleaned_json: Optional[str] = None
+    llm_error: Optional[str] = None
 
 
 IVCPipelineOutput = PhaseClassificationResult

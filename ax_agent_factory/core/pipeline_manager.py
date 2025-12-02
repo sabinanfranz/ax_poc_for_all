@@ -7,6 +7,7 @@ from typing import Optional
 from ax_agent_factory.core import research
 from ax_agent_factory.core.ivc.pipeline import run_ivc_pipeline
 from ax_agent_factory.core.schemas.common import JobInput, JobMeta
+from ax_agent_factory.core.workflow import run_workflow
 from ax_agent_factory.models.job_run import JobResearchResult, JobRun
 from ax_agent_factory.models.stages import PIPELINE_STAGES, StageMeta
 from ax_agent_factory.infra import db
@@ -71,4 +72,17 @@ class PipelineManager:
         raise NotImplementedError("Stage 2 DNA not implemented yet.")
 
     def run_stage_3_workflow(self, *args, **kwargs):  # pragma: no cover - stub
-        raise NotImplementedError("Stage 3 Workflow not implemented yet.")
+        job_run: JobRun = kwargs.get("job_run")
+        ivc_result = kwargs.get("ivc_result")
+        if job_run is None or job_run.id is None:
+            raise ValueError("job_run is required for Stage 3 Workflow")
+        if ivc_result is None:
+            raise ValueError("IVC result is required for Stage 3 Workflow")
+
+        job_meta = JobMeta(
+            company_name=job_run.company_name,
+            job_title=job_run.job_title,
+            industry_context="",
+            business_goal=None,
+        )
+        return run_workflow(job_meta, ivc_result.dict(), llm_client=kwargs.get("llm_client"))

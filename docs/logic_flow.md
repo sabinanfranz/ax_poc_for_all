@@ -3,7 +3,7 @@
 
 ## 1) End-to-End 개요
 - 입력: 회사명, 직무명, (선택) 수동 JD 텍스트.
-- PipelineManager가 JobRun 생성 → Stage 0 실행 → Stage 1 실행(선택) → UI 탭에서 결과 확인.
+- PipelineManager가 JobRun 생성 → Stage 0 실행 → Stage 1 실행(선택) → Stage 2(워크플로우 구조화/머메이드) 실행(추가 예정) → UI 탭에서 결과 확인.
 - LLM 실패/키 부재 시에도 스텁으로 이어서 결과를 보여준다.
 
 ```mermaid
@@ -16,6 +16,9 @@ graph TD
     DB --> PM
     S0 -->|raw_job_desc| S1
     S1B --> UI
+    S1B --> S2W[Stage 2.1 Workflow Struct<br/>core/workflow.py]
+    S2W --> S2M[Stage 2.2 Mermaid Render<br/>core/workflow.py]
+    S2M --> UI
     subgraph Infra
       LLM[infra/llm_client.py]
       PR[infra/prompts.py]
@@ -36,8 +39,10 @@ graph TD
 | --- | --- | --- | --- | --- |
 | 0.1 Collect | `JobRun(company_name, job_title)` + optional `manual_jd_text` | `prompts/job_research_collect.txt` → `call_job_research_collect` (web_search, 기본 `gemini-2.5-flash`, 키 없으면 스텁) | JSON만 허용 → `_clean_json_text`/`_normalize_json_text` → 실패 시 `_stub_job_research_collect` | `JobResearchCollectResult(raw_sources[])` + UI용 `llm_raw_text/llm_error` |
 | 0.2 Summarize | `JobRun`, `raw_sources`(0.1), optional `manual_jd_text` | `prompts/job_research_summarize.txt` → `call_job_research_summarize` (기본 `gemini-2.5-flash`, 키 없으면 스텁) | JSON만 허용 → `_clean_json_text`/`_normalize_json_text` → 실패 시 `_stub_job_research_summarize` | `JobResearchResult(raw_job_desc, research_sources)` + UI용 `llm_raw_text/llm_error` |
-| 1-A. IVC Task Extractor | `JobInput(job_meta, raw_job_desc)` | `prompts/ivc_task_extractor.txt` → `LLMClient.call` (미구현 시 스텁) | JSON 하나만 허용, 코드블록 금지. 성공 시 `parse_task_extraction_dict`로 `TaskExtractionResult` 생성 | `TaskExtractionResult(task_atoms[])` |
-| 1-B. IVC Phase Classifier | `IVCTaskListInput(job_meta, task_atoms)` | `prompts/ivc_phase_classifier.txt` → `LLMClient.call` (미구현 시 스텁) | JSON 하나만 허용, 코드블록 금지. 성공 시 `parse_phase_classification_dict`로 변환 | `PhaseClassificationResult(ivc_tasks[], phase_summary, task_atoms)` |
+| 1-A. IVC Task Extractor | `JobInput(job_meta, raw_job_desc)` | `prompts/ivc_task_extractor.txt` → `call_task_extractor` (기본 Gemini, 키 없으면 스텁) | JSON 하나만 허용, 코드블록 금지, sanitizer로 경미한 오류 수정 → `parse_task_extraction_dict` | `TaskExtractionResult(task_atoms[], llm_raw_text/llm_error)` |
+| 1-B. IVC Phase Classifier | `IVCTaskListInput(job_meta, task_atoms)` | `prompts/ivc_phase_classifier.txt` → `call_phase_classifier` (기본 Gemini, 키 없으면 스텁) | JSON 하나만 허용, 코드블록 금지, sanitizer로 경미한 오류 수정 → `parse_phase_classification_dict` | `PhaseClassificationResult(ivc_tasks[], phase_summary, task_atoms, llm_raw_text/llm_error)` |
+| 2.1 Workflow Struct | PhaseClassificationResult (job_meta, ivc_tasks, task_atoms, raw_job_desc) | `prompts/workflow_struct.txt` → `call_workflow_struct` | JSON-only, sanitizer로 경미한 오류 수정 → `WorkflowPlan` | `WorkflowPlan(stages, streams, nodes, edges, entry_points, exit_points, llm_raw_text/llm_error)` |
+| 2.2 Mermaid Render | WorkflowPlan | `prompts/workflow_mermaid.txt` → `call_workflow_mermaid` | JSON-only, Notion 호환 Mermaid 코드 생성 → 파싱 | `MermaidDiagram(mermaid_code, warnings, llm_raw_text/llm_error)` |
 
 ## 3) 실행 시나리오 (UI 관점)
 - 사이드바 입력 → `0. Job Research 실행` 버튼: Stage 0 단독 실행 후 DB/세션에 저장.

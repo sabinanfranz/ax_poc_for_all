@@ -10,7 +10,7 @@
   - `core/dna.py`, `core/workflow.py`: Stage 2/3 스텁.
 - **Infra**: 공통 유틸.
   - `infra/db.py`: SQLite CRUD(job_runs, job_research_results, job_research_collect_results), 경로 `AX_DB_PATH` 기본 `data/ax_factory.db`.
-  - `infra/llm_client.py`: Gemini web_browsing 호출 + JSON 파싱/스텁. 공용 LLMClient(call 미구현 시 NotImplementedError → 스텁 사용).
+  - `infra/llm_client.py`: Gemini web_browsing 호출 + JSON 파싱/스텁. Stage 0/1용 `call_job_research_*`, `call_task_extractor`, `call_phase_classifier` 헬퍼를 제공(키 없을 때 스텁).
   - `infra/prompts.py`: 프롬프트 파일 로더(LRU 캐시).
   - `infra/logging_config.py`: 콘솔+회전 파일 로그 초기화.
 - **Models/Schemas**:
@@ -40,7 +40,7 @@
 - **Stage 2~3**: dna/workflow 스텁만 존재(미구현).
 
 ## 4. LLM/프롬프트/로깅
-- **LLM**: Gemini web_browsing(google-genai). 모델 기본 `gemini-2.5-flash`(env `GEMINI_MODEL`). 키나 SDK 없으면 스텁 응답.
+- **LLM**: Gemini web_browsing(google-genai). 기본 `gemini-2.5-flash`(env `GEMINI_MODEL`). 키/SDK 없으면 스텁. Stage 1은 `call_task_extractor` / `call_phase_classifier` 헬퍼로 동일한 파서/스텁/로그 정책을 공유한다.
 - **프롬프트**: `prompts/job_research_collect.txt`, `prompts/job_research_summarize.txt`, `prompts/ivc_task_extractor.txt`, `prompts/ivc_phase_classifier.txt`. JSON-only 규칙, 코드블록 금지, one-shot 예시 포함.
 - **로깅**: `infra/logging_config.setup_logging`이 콘솔/파일 핸들러 구성(중복 방지 플래그 사용). UI에서 `logs/app.log` tail을 expander로 노출.
 

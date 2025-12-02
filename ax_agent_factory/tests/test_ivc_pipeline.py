@@ -115,5 +115,7 @@ def test_ivc_pipeline_raises_on_bad_json():
     )
 
     fake_llm = FakeLLMClient(["{not json}", "{also bad json}"])
-    with pytest.raises(ValueError):
-        run_ivc_pipeline(job_input, llm_client=fake_llm)
+    output = run_ivc_pipeline(job_input, llm_client=fake_llm)
+
+    assert output.ivc_tasks  # stub fallback
+    assert output.phase_summary.P1_SENSE["count"] == len(output.ivc_tasks)

@@ -46,9 +46,9 @@ PIPELINE_STAGES: list[StageMeta] = [
     StageMeta(
         id="S3_WORKFLOW",
         order=3,
-        label="3. Workflow Structuring",
-        description="Stage/Stream/Task 구조 설계",
-        implemented=False,
+        label="3. Workflow (Struct → Mermaid)",
+        description="Stage/Stream/Task 구조 설계 및 Mermaid 시각화",
+        implemented=True,
         run_fn_name="run_stage_3_workflow",
     ),
 ]

@@ -32,9 +32,11 @@ def main() -> None:
         manual_jd_text = st.text_area(
             "선택: 직접 붙여넣은 JD 텍스트",
             help="없으면 Gemini가 웹에서 JD/직무 설명을 찾아서 합성합니다.",
+            key="sidebar_manual_jd_text",
         )
         run_stage0 = st.button("0. Job Research 실행")
         run_stage01 = st.button("0~1단계 실행 (Job Research → IVC)")
+        run_stage012 = st.button("0~1~2단계 실행 (Job Research → IVC → Workflow)")
 
     if "pipeline" not in st.session_state:
         st.session_state.pipeline = PipelineManager()
@@ -45,6 +47,8 @@ def main() -> None:
     job_research_collect_result = st.session_state.get("job_research_collect_result")
     job_research_result = st.session_state.get("job_research_result")
     ivc_result = st.session_state.get("ivc_result")
+    workflow_plan = st.session_state.get("workflow_plan")
+    workflow_mermaid = st.session_state.get("workflow_mermaid")
 
     if run_stage0 and company_name and job_title:
         job_run = pipeline.create_or_get_job_run(company_name, job_title)
@@ -84,6 +88,31 @@ def main() -> None:
             except Exception as exc:  # pragma: no cover - UI feedback
                 st.error(f"0~1단계 실행 중 오류 발생: {exc}")
 
+    if run_stage012 and company_name and job_title:
+        job_run = pipeline.create_or_get_job_run(company_name, job_title)
+        with st.spinner("0~1~2단계 실행 중..."):
+            try:
+                job_research_result = pipeline.run_stage_0_job_research(
+                    job_run,
+                    manual_jd_text=manual_jd_text or None,
+                    force_rerun=True,
+                )
+                job_research_collect_result = db.get_job_research_collect_result(job_run.id)
+                ivc_result = pipeline.run_stage_1_ivc(job_run=job_run, job_research_result=job_research_result)
+                workflow_plan, workflow_mermaid = pipeline.run_stage_3_workflow(
+                    job_run=job_run, ivc_result=ivc_result
+                )
+                st.session_state.job_run = job_run
+                st.session_state.manual_jd_text = manual_jd_text or None
+                st.session_state.job_research_collect_result = job_research_collect_result
+                st.session_state.job_research_result = job_research_result
+                st.session_state.ivc_result = ivc_result
+                st.session_state.workflow_plan = workflow_plan
+                st.session_state.workflow_mermaid = workflow_mermaid
+                st.success("0~1~2단계 실행 완료!")
+            except Exception as exc:  # pragma: no cover - UI feedback
+                st.error(f"0~2단계 실행 중 오류 발생: {exc}")
+
     implemented_stages = [s for s in PIPELINE_STAGES if s.implemented]
     stage_map = {s.id: s for s in implemented_stages}
 
@@ -95,6 +124,9 @@ def main() -> None:
         elif s.id == "S1_IVC":
             tab_defs.append(("1-A Task Extractor", "S1A_TASK_EXTRACTOR"))
             tab_defs.append(("1-B Phase Classifier", "S1B_PHASE_CLASSIFIER"))
+        elif s.id == "S3_WORKFLOW":
+            tab_defs.append(("2.1 Workflow Struct", "S2_WORKFLOW_STRUCT"))
+            tab_defs.append(("2.2 Workflow Mermaid", "S2_WORKFLOW_MERMAID"))
         else:
             tab_defs.append((s.label, s.id))
 
@@ -122,6 +154,14 @@ def main() -> None:
                 st.subheader("1-B Phase Classifier")
                 st.caption(stage_map["S1_IVC"].description)
                 render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result, manual_jd_text_session)
+            elif tab_id == "S2_WORKFLOW_STRUCT":
+                st.subheader("2.1 Workflow Struct")
+                st.caption("Stage 1 결과 기반 워크플로우 구조화")
+                render_stage2_workflow_struct_tabs(job_run, ivc_result, workflow_plan)
+            elif tab_id == "S2_WORKFLOW_MERMAID":
+                st.subheader("2.2 Workflow Mermaid")
+                st.caption("워크플로우 구조를 Mermaid 코드로 시각화")
+                render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid)
             else:
                 st.info("이 Stage의 로직은 아직 구현되지 않았습니다.")
 
@@ -154,7 +194,7 @@ def render_stage0_collect_tabs(job_run, job_research_collect_result, manual_jd_t
     with tabs[2]:
         llm_raw = getattr(job_research_collect_result, "llm_raw_text", None) if job_research_collect_result else None
         if llm_raw:
-            st.text_area("LLM raw response", value=llm_raw, height=300)
+            st.text_area("LLM raw response", value=llm_raw, height=300, key="stage0_collect_llm_raw")
         elif job_research_collect_result:
             st.info("LLM 원문이 없습니다 (정상 파싱/캐시/스텁).")
         else:
@@ -162,7 +202,7 @@ def render_stage0_collect_tabs(job_run, job_research_collect_result, manual_jd_t
     with tabs[3]:
         cleaned = getattr(job_research_collect_result, "llm_cleaned_json", None) if job_research_collect_result else None
         if cleaned:
-            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300)
+            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300, key="stage0_collect_llm_cleaned")
         elif job_research_collect_result:
             st.info("정규화된 JSON 문자열이 없습니다. (캐시 결과 또는 스텁)")
         else:
@@ -223,13 +263,18 @@ def render_stage0_summarize_tabs(job_run, job_research_result, manual_jd_text: s
             st.warning("아직 Job Research Summarize 결과가 없습니다. 사이드바에서 0단계를 실행하세요.")
         else:
             st.subheader("raw_job_desc")
-            st.text_area("직무 설명 통합 텍스트", value=job_research_result.raw_job_desc, height=300)
+            st.text_area(
+                "직무 설명 통합 텍스트",
+                value=job_research_result.raw_job_desc,
+                height=300,
+                key="stage0_summary_raw_desc",
+            )
             st.subheader("research_sources")
             st.json(job_research_result.research_sources)
     with tabs[2]:
         llm_raw = getattr(job_research_result, "llm_raw_text", None) if job_research_result else None
         if llm_raw:
-            st.text_area("LLM raw response", value=llm_raw, height=300)
+            st.text_area("LLM raw response", value=llm_raw, height=300, key="stage0_summary_llm_raw")
         elif job_research_result:
             st.info("LLM 원문이 없습니다 (정상 파싱 또는 DB 캐시).")
         else:
@@ -237,7 +282,7 @@ def render_stage0_summarize_tabs(job_run, job_research_result, manual_jd_text: s
     with tabs[3]:
         cleaned = getattr(job_research_result, "llm_cleaned_json", None) if job_research_result else None
         if cleaned:
-            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300)
+            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300, key="stage0_summary_llm_cleaned")
         elif job_research_result:
             st.info("정규화된 JSON 문자열이 없습니다. (캐시 결과 또는 스텁)")
         else:
@@ -311,7 +356,7 @@ def render_stage1_task_extractor_tabs(job_run, job_research_result, ivc_result, 
     with tabs[2]:
         llm_raw = getattr(ivc_result, "llm_raw_text", None) if ivc_result else None
         if llm_raw:
-            st.text_area("LLM raw response", value=llm_raw, height=300)
+            st.text_area("LLM raw response", value=llm_raw, height=300, key="stage1a_llm_raw")
         elif ivc_result:
             st.info("LLM 원문이 없습니다. (스텁 또는 로깅 미연동)")
         else:
@@ -321,7 +366,7 @@ def render_stage1_task_extractor_tabs(job_run, job_research_result, ivc_result, 
     with tabs[3]:
         cleaned = getattr(ivc_result, "llm_cleaned_json", None) if ivc_result else None
         if cleaned:
-            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300)
+            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300, key="stage1a_llm_cleaned")
         elif ivc_result:
             st.info("정규화된 JSON 문자열이 없습니다. (LLM 스텁 또는 로깅 미연동)")
             st.json(ivc_result.dict())
@@ -395,7 +440,7 @@ def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result
     with tabs[2]:
         llm_raw = getattr(ivc_result, "llm_raw_text", None) if ivc_result else None
         if llm_raw:
-            st.text_area("LLM raw response", value=llm_raw, height=300)
+            st.text_area("LLM raw response", value=llm_raw, height=300, key="stage1b_llm_raw")
         elif ivc_result:
             st.info("LLM 원문이 없습니다. (스텁 또는 로깅 미연동)")
         else:
@@ -405,7 +450,7 @@ def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result
     with tabs[3]:
         cleaned = getattr(ivc_result, "llm_cleaned_json", None) if ivc_result else None
         if cleaned:
-            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300)
+            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300, key="stage1b_llm_cleaned")
         elif ivc_result:
             st.info("정규화된 JSON 문자열이 없습니다. (LLM 스텁 또는 로깅 미연동)")
             st.json(ivc_result.dict())
@@ -450,6 +495,160 @@ def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result
             """
         )
 
+
+def render_stage2_workflow_struct_tabs(job_run, ivc_result, workflow_plan) -> None:
+    """Render Workflow Struct (2.1) tabs."""
+    tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
+
+    with tabs[0]:
+        if job_run is None or ivc_result is None:
+            st.warning("Workflow Struct 입력이 없습니다. Stage 1 결과가 필요합니다.")
+        else:
+            st.json(
+                {
+                    "job_meta": {
+                        "company_name": job_run.company_name,
+                        "job_title": job_run.job_title,
+                    },
+                    "ivc_tasks": [t.dict() if hasattr(t, "dict") else t for t in (ivc_result.ivc_tasks or [])],
+                    "task_atoms": [t.dict() if hasattr(t, "dict") else t for t in (ivc_result.task_atoms or [])],
+                    "phase_summary": ivc_result.phase_summary.dict() if hasattr(ivc_result, "phase_summary") else None,
+                }
+            )
+
+    with tabs[1]:
+        if workflow_plan is None:
+            st.warning("아직 Workflow Struct 결과가 없습니다. 0~1~2 실행을 눌러주세요.")
+        else:
+            st.subheader("workflow_name")
+            st.write(workflow_plan.workflow_name)
+            st.subheader("stages")
+            st.json([s.dict() for s in workflow_plan.stages])
+            st.subheader("streams")
+            st.json([s.dict() for s in workflow_plan.streams])
+            st.subheader("nodes")
+            st.json([n.dict() for n in workflow_plan.nodes])
+            st.subheader("edges")
+            st.json([e.dict() for e in workflow_plan.edges])
+
+    with tabs[2]:
+        llm_raw = getattr(workflow_plan, "llm_raw_text", None) if workflow_plan else None
+        if llm_raw:
+            st.text_area("LLM raw response", value=llm_raw, height=300, key="stage2_struct_llm_raw")
+        elif workflow_plan:
+            st.info("LLM 원문이 없습니다. (스텁 또는 로깅 미연동)")
+        else:
+            st.info("아직 Workflow Struct 결과가 없습니다.")
+
+    with tabs[3]:
+        cleaned = getattr(workflow_plan, "llm_cleaned_json", None) if workflow_plan else None
+        if cleaned:
+            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300, key="stage2_struct_llm_cleaned")
+        elif workflow_plan:
+            st.info("정규화된 JSON 문자열이 없습니다. (스텁 또는 로깅 미연동)")
+        else:
+            st.info("아직 Workflow Struct 결과가 없습니다.")
+
+    with tabs[4]:
+        llm_error = getattr(workflow_plan, "llm_error", None) if workflow_plan else None
+        if llm_error:
+            st.error(f"LLM error: {llm_error}")
+        elif workflow_plan:
+            st.success("LLM 에러 없음 (또는 스텁).")
+        else:
+            st.info("아직 Workflow Struct 결과가 없습니다.")
+
+    with tabs[5]:
+        st.markdown(
+            """
+            **Stage 2.1 Workflow Struct 흐름**
+            - 입력: Stage 1 ivc_tasks, task_atoms, phase_summary
+            - LLM: `infra/llm_client.call_workflow_struct`, 프롬프트 `prompts/workflow_struct.txt`
+            - 출력: WorkflowPlan(stages, streams, nodes, edges, entry/exit)
+            """
+        )
+
+    with tabs[6]:
+        st.markdown(
+            """
+            **입력**
+            - job_meta, task_atoms, ivc_tasks, phase_summary
+
+            **출력**
+            - workflow_name, stages, streams, nodes, edges, entry_points, exit_points
+            - 디버그: llm_raw_text, llm_cleaned_json, llm_error
+            """
+        )
+
+
+def render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid) -> None:
+    """Render Workflow Mermaid (2.2) tabs."""
+    tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
+
+    with tabs[0]:
+        if workflow_plan is None:
+            st.warning("Workflow Mermaid 입력이 없습니다. 2.1 결과가 필요합니다.")
+        else:
+            st.json(workflow_plan.dict())
+
+    with tabs[1]:
+        if workflow_mermaid is None:
+            st.warning("아직 Workflow Mermaid 결과가 없습니다. 0~1~2 실행을 눌러주세요.")
+        else:
+            st.subheader("mermaid_code")
+            st.code(workflow_mermaid.mermaid_code, language="mermaid")
+            if workflow_mermaid.warnings:
+                st.subheader("warnings")
+                st.json(workflow_mermaid.warnings)
+
+    with tabs[2]:
+        llm_raw = getattr(workflow_mermaid, "llm_raw_text", None) if workflow_mermaid else None
+        if llm_raw:
+            st.text_area("LLM raw response", value=llm_raw, height=300, key="stage2_mermaid_llm_raw")
+        elif workflow_mermaid:
+            st.info("LLM 원문이 없습니다. (스텁 또는 로깅 미연동)")
+        else:
+            st.info("아직 Workflow Mermaid 결과가 없습니다.")
+
+    with tabs[3]:
+        cleaned = getattr(workflow_mermaid, "llm_cleaned_json", None) if workflow_mermaid else None
+        if cleaned:
+            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300, key="stage2_mermaid_llm_cleaned")
+        elif workflow_mermaid:
+            st.info("정규화된 JSON 문자열이 없습니다. (스텁 또는 로깅 미연동)")
+        else:
+            st.info("아직 Workflow Mermaid 결과가 없습니다.")
+
+    with tabs[4]:
+        llm_error = getattr(workflow_mermaid, "llm_error", None) if workflow_mermaid else None
+        if llm_error:
+            st.error(f"LLM error: {llm_error}")
+        elif workflow_mermaid:
+            st.success("LLM 에러 없음 (또는 스텁).")
+        else:
+            st.info("아직 Workflow Mermaid 결과가 없습니다.")
+
+    with tabs[5]:
+        st.markdown(
+            """
+            **Stage 2.2 Mermaid Render 흐름**
+            - 입력: WorkflowPlan(2.1 결과)
+            - LLM: `infra/llm_client.call_workflow_mermaid`, 프롬프트 `prompts/workflow_mermaid.txt`
+            - 출력: mermaid_code, warnings
+            """
+        )
+
+    with tabs[6]:
+        st.markdown(
+            """
+            **입력**
+            - WorkflowPlan(워크플로우 구조)
+
+            **출력**
+            - mermaid_code (노션 호환), warnings
+            - 디버그: llm_raw_text, llm_cleaned_json, llm_error
+            """
+        )
 
 def render_log_expander() -> None:
     """Show tail of logs/app.log for quick debugging."""

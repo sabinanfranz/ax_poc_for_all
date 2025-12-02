@@ -508,6 +508,315 @@ def call_job_research_summarize(
         return stub
 
 
+def call_task_extractor(
+    job_input: Dict[str, Any],
+    *,
+    max_tokens: int = 16384,
+    model: str | None = None,
+    job_run_id: Optional[int] = None,
+    stage_name: str = "stage1_task_extractor",
+    prompt_version: Optional[str] = None,
+    llm_client_override: Any = None,
+) -> Dict[str, Any]:
+    """Stage 1-A Task Extractor: use Gemini (or injected llm_client) to return JSON payload."""
+    prompt_template = _load_prompt("ivc_task_extractor")
+    prompt = prompt_template.replace("{input_json}", json.dumps(job_input, ensure_ascii=False))
+
+    started = time.time()
+    input_payload = {
+        "job_input": job_input,
+        "prompt": prompt,
+        "model": model or DEFAULT_GEMINI_MODEL,
+        "max_output_tokens": max_tokens,
+    }
+
+    # If a custom llm_client is provided (e.g., FakeLLMClient in tests), use it directly.
+    if llm_client_override is not None:
+        raw_output = llm_client_override.call(prompt)
+        json_text = _sanitize_task_extractor_text(_extract_json_from_text(raw_output))
+        parsed, cleaned = _parse_json_candidates(json_text)
+        if parsed is None:
+            raise InvalidLLMJsonError("Failed to parse Task Extractor JSON", raw_text=raw_output, json_text=cleaned)
+        parsed["_raw_text"] = raw_output
+        parsed["_cleaned_json"] = cleaned
+        return parsed
+
+    raw_text = ""
+    cleaned = ""
+    if genai is None or os.environ.get("GOOGLE_API_KEY") is None:
+        logger.warning("google-genai SDK or GOOGLE_API_KEY missing; returning stub task_extractor result")
+        stub = _stub_task_extractor(job_input, _raw_text=raw_text, _cleaned_json=cleaned)
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(stub, ensure_ascii=False),
+            status="stub_fallback",
+            error_type=None,
+            error_message=None,
+            latency_ms=_elapsed_ms(started),
+        )
+        return stub
+
+    client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+    config = types.GenerateContentConfig(max_output_tokens=max_tokens)
+
+    logger.info("Calling Gemini task_extractor model=%s", model or DEFAULT_GEMINI_MODEL)
+    try:
+        response = client.models.generate_content(
+            model=model or DEFAULT_GEMINI_MODEL,
+            contents=[{"role": "user", "parts": [{"text": prompt}]}],
+            config=config,
+        )
+        raw_text = _extract_text_from_response(response)
+        logger.info("Task Extractor raw response received. length=%d", len(raw_text))
+        sanitized_text = _sanitize_task_extractor_text(raw_text)
+        parsed, cleaned = _parse_json_candidates(sanitized_text)
+        if parsed is None:
+            raise InvalidLLMJsonError("Failed to parse Task Extractor JSON", raw_text=raw_text, json_text=cleaned)
+        parsed["_raw_text"] = raw_text
+        parsed["_cleaned_json"] = cleaned
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(parsed, ensure_ascii=False),
+            status="success",
+            error_type=None,
+            error_message=None,
+            latency_ms=_elapsed_ms(started),
+        )
+        return parsed
+    except InvalidLLMJsonError as exc:
+        logger.warning("Task Extractor JSON parsing failed; returning stub", exc_info=False)
+        stub = _stub_task_extractor(job_input, llm_error=str(exc), _raw_text=raw_text, _cleaned_json=cleaned)
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(stub, ensure_ascii=False),
+            status="json_parse_error",
+            error_type=exc.__class__.__name__,
+            error_message=str(exc),
+            latency_ms=_elapsed_ms(started),
+        )
+        return stub
+    except Exception as exc:  # pragma: no cover - runtime dependent
+        logger.error("Task Extractor JSON parsing failed; returning stub", exc_info=True)
+        stub = _stub_task_extractor(job_input, llm_error=str(exc), _raw_text=raw_text, _cleaned_json=cleaned)
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(stub, ensure_ascii=False),
+            status="json_parse_error",
+            error_type=exc.__class__.__name__,
+            error_message=str(exc),
+            latency_ms=_elapsed_ms(started),
+        )
+        return stub
+
+
+def call_phase_classifier(
+    task_list_input: Dict[str, Any],
+    *,
+    max_tokens: int = 16384,
+    model: str | None = None,
+    job_run_id: Optional[int] = None,
+    stage_name: str = "stage1_phase_classifier",
+    prompt_version: Optional[str] = None,
+    llm_client_override: Any = None,
+) -> Dict[str, Any]:
+    """Stage 1-B Phase Classifier: use Gemini (or injected llm_client) to return JSON payload."""
+    prompt_template = _load_prompt("ivc_phase_classifier")
+    prompt = prompt_template.replace("{input_json}", json.dumps(task_list_input, ensure_ascii=False))
+
+    started = time.time()
+    input_payload = {
+        "task_list_input": task_list_input,
+        "prompt": prompt,
+        "model": model or DEFAULT_GEMINI_MODEL,
+        "max_output_tokens": max_tokens,
+    }
+
+    if llm_client_override is not None:
+        raw_output = llm_client_override.call(prompt)
+        json_text = _sanitize_phase_classifier_text(_extract_json_from_text(raw_output))
+        parsed, cleaned = _parse_json_candidates(json_text)
+        if parsed is None:
+            raise InvalidLLMJsonError("Failed to parse Phase Classifier JSON", raw_text=raw_output, json_text=cleaned)
+        parsed["_raw_text"] = raw_output
+        parsed["_cleaned_json"] = cleaned
+        return parsed
+
+    raw_text = ""
+    cleaned = ""
+    if genai is None or os.environ.get("GOOGLE_API_KEY") is None:
+        logger.warning("google-genai SDK or GOOGLE_API_KEY missing; returning stub phase_classifier result")
+        stub = _stub_phase_classifier(task_list_input, _raw_text=raw_text, _cleaned_json=cleaned)
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(stub, ensure_ascii=False),
+            status="stub_fallback",
+            error_type=None,
+            error_message=None,
+            latency_ms=_elapsed_ms(started),
+        )
+        return stub
+
+    client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+    config = types.GenerateContentConfig(max_output_tokens=max_tokens)
+
+    logger.info("Calling Gemini phase_classifier model=%s", model or DEFAULT_GEMINI_MODEL)
+    try:
+        response = client.models.generate_content(
+            model=model or DEFAULT_GEMINI_MODEL,
+            contents=[{"role": "user", "parts": [{"text": prompt}]}],
+            config=config,
+        )
+        raw_text = _extract_text_from_response(response)
+        logger.info("Phase Classifier raw response received. length=%d", len(raw_text))
+        sanitized_text = _sanitize_phase_classifier_text(raw_text)
+        parsed, cleaned = _parse_json_candidates(sanitized_text)
+        if parsed is None:
+            raise InvalidLLMJsonError("Failed to parse Phase Classifier JSON", raw_text=raw_text, json_text=cleaned)
+        parsed["_raw_text"] = raw_text
+        parsed["_cleaned_json"] = cleaned
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(parsed, ensure_ascii=False),
+            status="success",
+            error_type=None,
+            error_message=None,
+            latency_ms=_elapsed_ms(started),
+        )
+        return parsed
+    except InvalidLLMJsonError as exc:
+        logger.warning("Phase Classifier JSON parsing failed; returning stub", exc_info=False)
+        stub = _stub_phase_classifier(task_list_input, llm_error=str(exc), _raw_text=raw_text, _cleaned_json=cleaned)
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(stub, ensure_ascii=False),
+            status="json_parse_error",
+            error_type=exc.__class__.__name__,
+            error_message=str(exc),
+            latency_ms=_elapsed_ms(started),
+        )
+        return stub
+    except Exception as exc:  # pragma: no cover - runtime dependent
+        logger.error("Phase Classifier JSON parsing failed; returning stub", exc_info=True)
+        stub = _stub_phase_classifier(task_list_input, llm_error=str(exc), _raw_text=raw_text, _cleaned_json=cleaned)
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(stub, ensure_ascii=False),
+            status="json_parse_error",
+            error_type=exc.__class__.__name__,
+            error_message=str(exc),
+            latency_ms=_elapsed_ms(started),
+        )
+        return stub
+
+
+def call_workflow_struct(
+    workflow_input: Dict[str, Any],
+    *,
+    max_tokens: int = 16384,
+    model: str | None = None,
+    job_run_id: Optional[int] = None,
+    stage_name: str = "stage2_workflow_struct",
+    prompt_version: Optional[str] = None,
+    llm_client_override: Any = None,
+) -> Dict[str, Any]:
+    """Stage 2.1 Workflow Structuring: build logical workflow from task list."""
+    prompt_template = _load_prompt("workflow_struct")
+    prompt = prompt_template.replace("{input_json}", json.dumps(workflow_input, ensure_ascii=False))
+    return _generic_llm_json_call(
+        prompt=prompt,
+        model=model,
+        max_tokens=max_tokens,
+        job_run_id=job_run_id,
+        stage_name=stage_name,
+        prompt_version=prompt_version,
+        llm_client_override=llm_client_override,
+        sanitizer=_sanitize_workflow_text,
+        stub_factory=lambda **extra: _stub_workflow_struct(workflow_input, **extra),
+    )
+
+
+def call_workflow_mermaid(
+    workflow_plan: Dict[str, Any],
+    *,
+    max_tokens: int = 16384,
+    model: str | None = None,
+    job_run_id: Optional[int] = None,
+    stage_name: str = "stage2_workflow_mermaid",
+    prompt_version: Optional[str] = None,
+    llm_client_override: Any = None,
+) -> Dict[str, Any]:
+    """Stage 2.2 Mermaid visualization: render mermaid_code from workflow plan."""
+    prompt_template = _load_prompt("workflow_mermaid")
+    prompt = prompt_template.replace("{input_json}", json.dumps(workflow_plan, ensure_ascii=False))
+    return _generic_llm_json_call(
+        prompt=prompt,
+        model=model,
+        max_tokens=max_tokens,
+        job_run_id=job_run_id,
+        stage_name=stage_name,
+        prompt_version=prompt_version,
+        llm_client_override=llm_client_override,
+        sanitizer=_sanitize_workflow_text,
+        stub_factory=lambda **extra: _stub_workflow_mermaid(workflow_plan, **extra),
+    )
+
+
 def _stub_job_research(company_name: str, job_title: str, **extra: Any) -> Dict[str, Any]:
     """Return stubbed Job Research output when LLM is unavailable or parsing fails."""
     stub = {
@@ -576,6 +885,267 @@ def _stub_job_research_summarize(
     if "_raw_text" not in stub and "raw_text" in stub:
         stub["_raw_text"] = stub["raw_text"]
     return stub
+
+
+def _stub_task_extractor(job_input: Dict[str, Any], **extra: Any) -> Dict[str, Any]:
+    """Stub for Stage 1-A Task Extractor."""
+    job_meta = job_input.get("job_meta", {}) if isinstance(job_input, dict) else {}
+    raw_job_desc = job_input.get("raw_job_desc", "") if isinstance(job_input, dict) else ""
+    stub_task_atoms = [
+        {
+            "task_id": "T01",
+            "task_original_sentence": (raw_job_desc or "")[:200],
+            "task_korean": f"{job_meta.get('job_title', '직무')} 업무 파악하기",
+            "task_english": "Understand role tasks",
+            "notes": "Stub result generated without LLM",
+        }
+    ]
+    stub = {"job_meta": job_meta, "task_atoms": stub_task_atoms}
+    if extra:
+        stub.update(extra)
+    if "_raw_text" not in stub and "raw_text" in stub:
+        stub["_raw_text"] = stub["raw_text"]
+    return stub
+
+
+def _stub_phase_classifier(task_list_input: Dict[str, Any], **extra: Any) -> Dict[str, Any]:
+    """Stub for Stage 1-B Phase Classifier: assign SENSE to all tasks."""
+    job_meta = task_list_input.get("job_meta", {}) if isinstance(task_list_input, dict) else {}
+    task_atoms = task_list_input.get("task_atoms", []) if isinstance(task_list_input, dict) else []
+    ivc_tasks = []
+    summary_counts = {
+        "P1_SENSE": 0,
+        "P2_DECIDE": 0,
+        "P3_EXECUTE_TRANSFORM": 0,
+        "P3_EXECUTE_TRANSFER": 0,
+        "P3_EXECUTE_COMMIT": 0,
+        "P4_ASSURE": 0,
+    }
+    for atom in task_atoms:
+        ivc_tasks.append(
+            {
+                "task_id": atom.get("task_id"),
+                "task_korean": atom.get("task_korean"),
+                "task_original_sentence": atom.get("task_original_sentence"),
+                "ivc_phase": "P1_SENSE",
+                "ivc_exec_subphase": None,
+                "primitive_lv1": "SENSE",
+                "classification_reason": "Stub: default to SENSE",
+            }
+        )
+        summary_counts["P1_SENSE"] += 1
+
+    phase_summary = {
+        "P1_SENSE": {"count": summary_counts["P1_SENSE"]},
+        "P2_DECIDE": {"count": summary_counts["P2_DECIDE"]},
+        "P3_EXECUTE_TRANSFORM": {"count": summary_counts["P3_EXECUTE_TRANSFORM"]},
+        "P3_EXECUTE_TRANSFER": {"count": summary_counts["P3_EXECUTE_TRANSFER"]},
+        "P3_EXECUTE_COMMIT": {"count": summary_counts["P3_EXECUTE_COMMIT"]},
+        "P4_ASSURE": {"count": summary_counts["P4_ASSURE"]},
+    }
+    stub = {
+        "job_meta": job_meta,
+        "task_atoms": task_atoms,
+        "ivc_tasks": ivc_tasks,
+        "phase_summary": phase_summary,
+    }
+    if extra:
+        stub.update(extra)
+    if "_raw_text" not in stub and "raw_text" in stub:
+        stub["_raw_text"] = stub["raw_text"]
+    return stub
+
+
+def _stub_workflow_struct(workflow_input: Dict[str, Any], **extra: Any) -> Dict[str, Any]:
+    """Stub for Stage 2.1 Workflow structuring."""
+    job_title = workflow_input.get("job_meta", {}).get("job_title", "Workflow")
+    stub = {
+        "workflow_name": f"{job_title} 워크플로우 (stub)",
+        "workflow_summary": "Stub workflow plan",
+        "stages": [{"stage_id": "S1", "name": "Stage 1"}],
+        "streams": [{"stream_id": "S1_ST1", "name": "Main Stream", "stage_id": "S1"}],
+        "nodes": [
+            {"node_id": "T1", "label": "시작", "stage_id": "S1", "stream_id": "S1_ST1", "is_entry": True},
+            {"node_id": "T2", "label": "종료", "stage_id": "S1", "stream_id": "S1_ST1", "is_exit": True},
+        ],
+        "edges": [{"source": "T1", "target": "T2"}],
+        "entry_points": ["T1"],
+        "exit_points": ["T2"],
+    }
+    if extra:
+        stub.update(extra)
+    if "_raw_text" not in stub and "raw_text" in stub:
+        stub["_raw_text"] = stub["raw_text"]
+    return stub
+
+
+def _stub_workflow_mermaid(workflow_plan: Dict[str, Any], **extra: Any) -> Dict[str, Any]:
+    """Stub for Stage 2.2 Mermaid rendering."""
+    name = workflow_plan.get("workflow_name", "Workflow")
+    stub = {
+        "workflow_name": name,
+        "mermaid_code": "flowchart TD\n    T1[\"시작\"] --> T2[\"종료\"]",
+        "warnings": ["Stub mermaid_code"],
+    }
+    if extra:
+        stub.update(extra)
+    if "_raw_text" not in stub and "raw_text" in stub:
+        stub["_raw_text"] = stub["raw_text"]
+    return stub
+
+
+def _generic_llm_json_call(
+    *,
+    prompt: str,
+    model: str | None,
+    max_tokens: int,
+    job_run_id: Optional[int],
+    stage_name: str,
+    prompt_version: Optional[str],
+    llm_client_override: Any,
+    sanitizer,
+    stub_factory,
+) -> Dict[str, Any]:
+    """Reusable LLM JSON call with sanitizer, stubs, logging."""
+    started = time.time()
+    raw_text = ""
+    cleaned = ""
+    input_payload = {
+        "prompt": prompt,
+        "model": model or DEFAULT_GEMINI_MODEL,
+        "max_output_tokens": max_tokens,
+    }
+
+    # Fake client (tests)
+    if llm_client_override is not None:
+        raw_output = llm_client_override.call(prompt)
+        json_text = sanitizer(_extract_json_from_text(raw_output))
+        parsed, cleaned = _parse_json_candidates(json_text)
+        if parsed is None:
+            raise InvalidLLMJsonError("Failed to parse JSON", raw_text=raw_output, json_text=cleaned)
+        parsed["_raw_text"] = raw_output
+        parsed["_cleaned_json"] = cleaned
+        return parsed
+
+    # Stub fallback when SDK/key missing
+    if genai is None or os.environ.get("GOOGLE_API_KEY") is None:
+        logger.warning("google-genai SDK or GOOGLE_API_KEY missing; returning stub for %s", stage_name)
+        stub = stub_factory(_raw_text="", _cleaned_json="")
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(stub, ensure_ascii=False),
+            status="stub_fallback",
+            error_type=None,
+            error_message=None,
+            latency_ms=_elapsed_ms(started),
+        )
+        return stub
+
+    client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+    config = types.GenerateContentConfig(max_output_tokens=max_tokens)
+
+    try:
+        response = client.models.generate_content(
+            model=model or DEFAULT_GEMINI_MODEL,
+            contents=[{"role": "user", "parts": [{"text": prompt}]}],
+            config=config,
+        )
+        raw_text = _extract_text_from_response(response)
+        logger.info("%s raw response received. length=%d", stage_name, len(raw_text))
+        json_text = sanitizer(raw_text)
+        parsed, cleaned = _parse_json_candidates(json_text)
+        if parsed is None:
+            raise InvalidLLMJsonError(f"Failed to parse {stage_name} JSON", raw_text=raw_text, json_text=cleaned)
+        parsed["_raw_text"] = raw_text
+        parsed["_cleaned_json"] = cleaned
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(parsed, ensure_ascii=False),
+            status="success",
+            error_type=None,
+            error_message=None,
+            latency_ms=_elapsed_ms(started),
+        )
+        return parsed
+    except InvalidLLMJsonError as exc:
+        logger.warning("%s JSON parsing failed; returning stub", stage_name, exc_info=False)
+        stub = stub_factory(llm_error=str(exc), _raw_text=raw_text, _cleaned_json=cleaned)
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(stub, ensure_ascii=False),
+            status="json_parse_error",
+            error_type=exc.__class__.__name__,
+            error_message=str(exc),
+            latency_ms=_elapsed_ms(started),
+        )
+        return stub
+    except Exception as exc:  # pragma: no cover - runtime dependent
+        logger.error("%s JSON parsing failed; returning stub", stage_name, exc_info=True)
+        stub = stub_factory(llm_error=str(exc), _raw_text=raw_text, _cleaned_json=cleaned)
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_text,
+            output_json_parsed=json.dumps(stub, ensure_ascii=False),
+            status="json_parse_error",
+            error_type=exc.__class__.__name__,
+            error_message=str(exc),
+            latency_ms=_elapsed_ms(started),
+        )
+        return stub
+
+
+def _sanitize_task_extractor_text(text: str) -> str:
+    """
+    Light auto-fix for Task Extractor JSON:
+    - Normalize JSON-ish text.
+    - Remove stray '}' immediately after raw_job_desc (common LLM mistake: `"raw_job_desc": "..."} ,`).
+    """
+    normalized = _normalize_json_text(text)
+    normalized = re.sub(r'("raw_job_desc"\s*:\s*"[^"]*")\s*},', r"\1,", normalized)
+    return normalized
+
+
+def _sanitize_phase_classifier_text(text: str) -> str:
+    """
+    Light auto-fix for Phase Classifier JSON (same guard as task_extractor).
+    """
+    normalized = _normalize_json_text(text)
+    normalized = re.sub(r'("raw_job_desc"\s*:\s*"[^"]*")\s*},', r"\1,", normalized)
+    return normalized
+
+
+def _sanitize_workflow_text(text: str) -> str:
+    """Light auto-fix for Workflow JSON."""
+    normalized = _normalize_json_text(text)
+    normalized = re.sub(r'("raw_job_desc"\s*:\s*"[^"]*")\s*},', r"\1,", normalized)
+    return normalized
 
 
 def _parse_json_candidates(raw_text: str) -> tuple[dict | None, str]:

@@ -10,9 +10,10 @@ from ax_agent_factory.core.schemas.common import IVCAtomicTask, JobInput, TaskEx
 from ax_agent_factory.infra.llm_client import (
     LLMClient,
     InvalidLLMJsonError,
-    _extract_json_from_text,
+    call_task_extractor,
 )
 from ax_agent_factory.infra.prompts import load_prompt
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -21,42 +22,13 @@ class IVCTaskExtractor:
     """IVC-A Task Extractor: 원자 과업 추출 전담."""
 
     def __init__(self, llm_client: Optional[LLMClient] = None) -> None:
-        self.llm = llm_client or LLMClient()
+        self.llm = llm_client
 
     def build_prompt(self, job_input: JobInput) -> str:
         """[IVC_TASK_EXTRACTOR_PROMPT_SPEC]에 따른 프롬프트 생성."""
         input_json = job_input.model_dump()
         template = load_prompt("ivc_task_extractor")
         return template.replace("{input_json}", json.dumps(input_json, ensure_ascii=False))
-
-    def parse_response(self, raw_output: str) -> TaskExtractionResult:
-        """LLM 응답(JSON 문자열 기대)을 파싱해 TaskExtractionResult로 변환."""
-        logger.info("Parsing LLM JSON for ivc_task_extractor...")
-        json_text = _extract_json_from_text(raw_output)
-        try:
-            data = json.loads(json_text)
-        except json.JSONDecodeError as exc:
-            logger.error("Task Extractor JSON decoding failed", exc_info=True)
-            raise InvalidLLMJsonError(
-                "Failed to parse Task Extractor output as JSON",
-                raw_text=raw_output,
-                json_text=json_text,
-            ) from exc
-
-        if not isinstance(data, dict):
-            raise InvalidLLMJsonError(
-                "Task Extractor JSON is not an object",
-                raw_text=raw_output,
-                json_text=json_text,
-            )
-
-        try:
-            result = parse_task_extraction_dict(data)
-            logger.info("Task Extractor parsing succeeded. task_count=%d", len(result.task_atoms))
-            return result
-        except Exception:
-            logger.error("Task Extractor payload validation failed", exc_info=True)
-            raise
 
     def run(self, job_input: JobInput) -> TaskExtractionResult:
         """프롬프트 생성 → LLM 호출 → 파싱."""
@@ -65,24 +37,31 @@ class IVCTaskExtractor:
             job_input.job_meta.job_title,
             job_input.job_meta.company_name,
         )
-        prompt = self.build_prompt(job_input)
         try:
-            logger.info("Calling ivc_task_extractor LLM...")
-            raw_output = self.llm.call(prompt)
-            logger.info(
-                "LLM response received. length=%d, first_200_chars=%s",
-                len(raw_output or ""),
-                (raw_output or "")[:200],
+            llm_output = call_task_extractor(
+                job_input.model_dump(),
+                llm_client_override=self.llm,
             )
-            return self.parse_response(raw_output)
+            result = parse_task_extraction_dict(llm_output)
+            # attach debug fields for UI (not persisted)
+            if hasattr(result, "llm_raw_text"):
+                result.llm_raw_text = llm_output.get("_raw_text")  # type: ignore[attr-defined]
+                result.llm_cleaned_json = llm_output.get("_cleaned_json")  # type: ignore[attr-defined]
+                result.llm_error = llm_output.get("llm_error")  # type: ignore[attr-defined]
+            logger.info("Task Extractor parsing succeeded. task_count=%d", len(result.task_atoms))
+            return result
         except InvalidLLMJsonError:
-            # Bubble up with context; upstream can decide to fallback
             logger.error("Task Extractor JSON parsing error", exc_info=True)
-            raise
-        except NotImplementedError:
-            logger.warning("LLM not implemented; returning stub result")
-            # Fallback stub for environments without LLM connectivity
             return self._stub_result(job_input)
+        except ValidationError as exc:
+            logger.warning("Task Extractor validation failed; returning stub", exc_info=False)
+            stub = self._stub_result(job_input)
+            if hasattr(stub, "llm_error"):
+                stub.llm_error = str(exc)  # type: ignore[attr-defined]
+            return stub
+        except Exception:
+            logger.error("Task Extractor unexpected error", exc_info=True)
+            raise
 
     def _stub_result(self, job_input: JobInput) -> TaskExtractionResult:
         """Generate a simple deterministic stub result if LLM is unavailable."""
