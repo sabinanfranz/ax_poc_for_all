@@ -5,6 +5,7 @@
 - **API 키 없음/오류**: `GOOGLE_API_KEY`가 없거나 잘못되면 Stage 0/1이 스텁으로 동작한다. 실제 호출이 필요하면 유효한 키와 web_browsing 지원 모델(`gemini-2.5-flash` 등) 설정.
 - **JSON 파싱 실패**: `_extract_json_from_text`가 코드블록/잡설을 제거해도 `{}`가 없으면 InvalidLLMJsonError가 발생. Stage 0은 `_stub_job_research`로, Stage 1은 `_stub_result`로 폴백. UI의 “LLM 응답/에러” 탭에서 raw/error 확인.
 - **모델 기능 미지원**: web_search 미지원 모델로 호출 시 응답이 비어 파싱 실패 가능 → `GEMINI_MODEL`을 기본값으로 되돌린다.
+- **Workflow JSON 실패**: Stage 3(2.1/2.2)에서도 파싱 실패 시 스텁이 반환된다. mermaid_code가 단순 흐름만 그려질 수 있으므로 입력을 재검토하거나 키를 확인한다.
 
 ## 환경 변수/경로
 - **ModuleNotFoundError**: 항상 리포 루트에서 `streamlit run ax_agent_factory/app.py` 실행. `ax_agent_factory/__init__.py` 존재 여부 확인.

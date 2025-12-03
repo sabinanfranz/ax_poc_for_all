@@ -3,7 +3,15 @@
 from dataclasses import dataclass
 from typing import Literal
 
-StageId = Literal["S0_JOB_RESEARCH", "S1_IVC", "S2_DNA", "S3_WORKFLOW"]
+StageId = Literal[
+    "S0_1_COLLECT",
+    "S0_2_SUMMARIZE",
+    "S1_1_TASK_EXTRACT",
+    "S1_2_PHASE_CLASSIFY",
+    "S1_3_STATIC_CLASSIFY",
+    "S2_1_WORKFLOW_STRUCT",
+    "S2_2_WORKFLOW_MERMAID",
+]
 
 
 @dataclass
@@ -16,39 +24,95 @@ class StageMeta:
     description: str
     implemented: bool
     run_fn_name: str
+    ui_group: int
+    ui_step: int
+    ui_label: str
+    tab_title: str
 
 
 PIPELINE_STAGES: list[StageMeta] = [
     StageMeta(
-        id="S0_JOB_RESEARCH",
+        id="S0_1_COLLECT",
         order=0,
-        label="0. Job Research",
-        description="회사명 + 직무명을 기반으로 웹 리서치/JD 크롤링 후 raw_job_desc 생성",
+        label="0.1 Job Research Collect",
+        description="회사명/직무/선택 JD로 웹 리서치 후 raw_sources 수집",
         implemented=True,
-        run_fn_name="run_stage_0_job_research",
+        run_fn_name="run_stage_0_1_collect",
+        ui_group=0,
+        ui_step=1,
+        ui_label="0.1",
+        tab_title="0.1 Job Research Collect",
     ),
     StageMeta(
-        id="S1_IVC",
+        id="S0_2_SUMMARIZE",
         order=1,
-        label="1. IVC 분석",
-        description="raw_job_desc를 IVC Task 리스트로 구조화",
+        label="0.2 Job Research Summarize",
+        description="raw_sources를 통합해 raw_job_desc + research_sources 생성",
         implemented=True,
-        run_fn_name="run_stage_1_ivc",
+        run_fn_name="run_stage_0_2_summarize",
+        ui_group=0,
+        ui_step=2,
+        ui_label="0.2",
+        tab_title="0.2 Job Research Summarize",
     ),
     StageMeta(
-        id="S2_DNA",
+        id="S1_1_TASK_EXTRACT",
         order=2,
-        label="2. DNA 분류",
-        description="Task들에 Primitive/Domain/Mechanism 부여",
-        implemented=False,
-        run_fn_name="run_stage_2_dna",
+        label="1.1 Task Extractor",
+        description="raw_job_desc를 원자 과업(task_atoms)으로 분해",
+        implemented=True,
+        run_fn_name="run_stage_1_1_task_extractor",
+        ui_group=1,
+        ui_step=1,
+        ui_label="1.1",
+        tab_title="1.1 Task Extractor",
     ),
     StageMeta(
-        id="S3_WORKFLOW",
+        id="S1_2_PHASE_CLASSIFY",
         order=3,
-        label="3. Workflow (Struct → Mermaid)",
-        description="Stage/Stream/Task 구조 설계 및 Mermaid 시각화",
+        label="1.2 Phase Classifier",
+        description="task_atoms를 IVC Phase/Primitive로 분류",
         implemented=True,
-        run_fn_name="run_stage_3_workflow",
+        run_fn_name="run_stage_1_2_phase_classifier",
+        ui_group=1,
+        ui_step=2,
+        ui_label="1.2",
+        tab_title="1.2 Phase Classifier",
+    ),
+    StageMeta(
+        id="S1_3_STATIC_CLASSIFY",
+        order=4,
+        label="1.3 Static Task Classifier",
+        description="각 Task에 정적 유형/도메인/RAG/가치/복잡도 메타 부여",
+        implemented=True,
+        run_fn_name="run_stage_1_3_static",
+        ui_group=1,
+        ui_step=3,
+        ui_label="1.3",
+        tab_title="1.3 Static Task Classifier",
+    ),
+    StageMeta(
+        id="S2_1_WORKFLOW_STRUCT",
+        order=5,
+        label="2.1 Workflow Struct",
+        description="IVC 결과로 워크플로우 Stage/Stream/Node/Edge 구조화",
+        implemented=True,
+        run_fn_name="run_stage_2_1_workflow_struct",
+        ui_group=2,
+        ui_step=1,
+        ui_label="2.1",
+        tab_title="2.1 Workflow Struct",
+    ),
+    StageMeta(
+        id="S2_2_WORKFLOW_MERMAID",
+        order=6,
+        label="2.2 Workflow Mermaid",
+        description="워크플로우를 Mermaid 코드로 렌더링",
+        implemented=True,
+        run_fn_name="run_stage_2_2_workflow_mermaid",
+        ui_group=2,
+        ui_step=2,
+        ui_label="2.2",
+        tab_title="2.2 Workflow Mermaid",
     ),
 ]

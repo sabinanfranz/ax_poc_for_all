@@ -34,9 +34,11 @@ def main() -> None:
             help="없으면 Gemini가 웹에서 JD/직무 설명을 찾아서 합성합니다.",
             key="sidebar_manual_jd_text",
         )
-        run_stage0 = st.button("0. Job Research 실행")
-        run_stage01 = st.button("0~1단계 실행 (Job Research → IVC)")
-        run_stage012 = st.button("0~1~2단계 실행 (Job Research → IVC → Workflow)")
+        run_stage0 = st.button("0. Job Research만 실행")
+        run_stage1 = st.button("1. IVC까지 실행")
+        run_stage13 = st.button("1.3 Static까지 실행")
+        run_stage2 = st.button("2. Workflow까지 실행")
+        run_next = st.button("▶ 다음 단계 실행")
 
     if "pipeline" not in st.session_state:
         st.session_state.pipeline = PipelineManager()
@@ -44,91 +46,93 @@ def main() -> None:
 
     job_run = st.session_state.get("job_run")
     manual_jd_text_session = st.session_state.get("manual_jd_text")
-    job_research_collect_result = st.session_state.get("job_research_collect_result")
-    job_research_result = st.session_state.get("job_research_result")
-    ivc_result = st.session_state.get("ivc_result")
+    stage0_collect_result = st.session_state.get("stage0_collect_result")
+    stage0_summarize_result = st.session_state.get("stage0_summarize_result")
+    stage1_task_result = st.session_state.get("stage1_task_result")
+    stage1_phase_result = st.session_state.get("stage1_phase_result")
+    stage1_static_result = st.session_state.get("stage1_static_result")
     workflow_plan = st.session_state.get("workflow_plan")
     workflow_mermaid = st.session_state.get("workflow_mermaid")
+    last_completed_label = st.session_state.get("last_completed_ui_label")
+
+    def _store_results(results: dict, target_label: str) -> None:
+        if "stage0_collect" in results:
+            st.session_state.stage0_collect_result = results["stage0_collect"]
+        if "stage0_summarize" in results:
+            st.session_state.stage0_summarize_result = results["stage0_summarize"]
+        if "stage1_task_extract" in results:
+            st.session_state.stage1_task_result = results["stage1_task_extract"]
+        if "stage1_phase" in results:
+            st.session_state.stage1_phase_result = results["stage1_phase"]
+        if "stage1_static" in results:
+            st.session_state.stage1_static_result = results["stage1_static"]
+        if "stage2_plan" in results:
+            st.session_state.workflow_plan = results["stage2_plan"]
+        if "stage2_mermaid" in results:
+            st.session_state.workflow_mermaid = results["stage2_mermaid"]
+        st.session_state.last_completed_ui_label = target_label
+
+    def _run_until(target_label: str) -> None:
+        nonlocal job_run
+        if job_run is None:
+            st.warning("JobRun이 없습니다. 먼저 JobRun을 생성/선택하세요.")
+            return
+        with st.spinner(f"{target_label} 단계까지 실행 중..."):
+            try:
+                results = pipeline.run_pipeline_until_stage(
+                    job_run,
+                    target_label,
+                    manual_jd_text=manual_jd_text or None,
+                )
+                _store_results(results, target_label)
+                st.success(f"{target_label} 단계까지 실행 완료!")
+            except Exception as exc:  # pragma: no cover - UI feedback
+                st.error(f"{target_label} 실행 중 오류 발생: {exc}")
 
     if run_stage0 and company_name and job_title:
-        job_run = pipeline.create_or_get_job_run(company_name, job_title)
-        with st.spinner("0. Job Research 실행 중..."):
-            try:
-                job_research_result = pipeline.run_stage_0_job_research(
-                    job_run,
-                    manual_jd_text=manual_jd_text or None,
-                    force_rerun=True,
-                )
-                job_research_collect_result = db.get_job_research_collect_result(job_run.id)
-                st.session_state.job_run = job_run
-                st.session_state.manual_jd_text = manual_jd_text or None
-                st.session_state.job_research_collect_result = job_research_collect_result
-                st.session_state.job_research_result = job_research_result
-                st.success("Job Research 완료!")
-            except Exception as exc:  # pragma: no cover - UI feedback
-                st.error(f"Job Research 중 오류 발생: {exc}")
+        job_run = pipeline.create_or_get_job_run(
+            company_name, job_title, manual_jd_text=manual_jd_text or None
+        )
+        st.session_state.job_run = job_run
+        st.session_state.manual_jd_text = manual_jd_text or None
+        _run_until("0.2")
 
-    if run_stage01 and company_name and job_title:
-        job_run = pipeline.create_or_get_job_run(company_name, job_title)
-        with st.spinner("0~1단계 실행 중..."):
-            try:
-                job_research_result = pipeline.run_stage_0_job_research(
-                    job_run,
-                    manual_jd_text=manual_jd_text or None,
-                    force_rerun=True,
-                )
-                job_research_collect_result = db.get_job_research_collect_result(job_run.id)
-                ivc_result = pipeline.run_stage_1_ivc(job_run=job_run, job_research_result=job_research_result)
-                st.session_state.job_run = job_run
-                st.session_state.manual_jd_text = manual_jd_text or None
-                st.session_state.job_research_collect_result = job_research_collect_result
-                st.session_state.job_research_result = job_research_result
-                st.session_state.ivc_result = ivc_result
-                st.success("0~1단계 실행 완료!")
-            except Exception as exc:  # pragma: no cover - UI feedback
-                st.error(f"0~1단계 실행 중 오류 발생: {exc}")
+    if run_stage1 and company_name and job_title:
+        job_run = pipeline.create_or_get_job_run(
+            company_name, job_title, manual_jd_text=manual_jd_text or None
+        )
+        st.session_state.job_run = job_run
+        st.session_state.manual_jd_text = manual_jd_text or None
+        _run_until("1.2")
 
-    if run_stage012 and company_name and job_title:
-        job_run = pipeline.create_or_get_job_run(company_name, job_title)
-        with st.spinner("0~1~2단계 실행 중..."):
-            try:
-                job_research_result = pipeline.run_stage_0_job_research(
-                    job_run,
-                    manual_jd_text=manual_jd_text or None,
-                    force_rerun=True,
-                )
-                job_research_collect_result = db.get_job_research_collect_result(job_run.id)
-                ivc_result = pipeline.run_stage_1_ivc(job_run=job_run, job_research_result=job_research_result)
-                workflow_plan, workflow_mermaid = pipeline.run_stage_3_workflow(
-                    job_run=job_run, ivc_result=ivc_result
-                )
-                st.session_state.job_run = job_run
-                st.session_state.manual_jd_text = manual_jd_text or None
-                st.session_state.job_research_collect_result = job_research_collect_result
-                st.session_state.job_research_result = job_research_result
-                st.session_state.ivc_result = ivc_result
-                st.session_state.workflow_plan = workflow_plan
-                st.session_state.workflow_mermaid = workflow_mermaid
-                st.success("0~1~2단계 실행 완료!")
-            except Exception as exc:  # pragma: no cover - UI feedback
-                st.error(f"0~2단계 실행 중 오류 발생: {exc}")
+    if run_stage13 and company_name and job_title:
+        job_run = pipeline.create_or_get_job_run(
+            company_name, job_title, manual_jd_text=manual_jd_text or None
+        )
+        st.session_state.job_run = job_run
+        st.session_state.manual_jd_text = manual_jd_text or None
+        _run_until("1.3")
+
+    if run_stage2 and company_name and job_title:
+        job_run = pipeline.create_or_get_job_run(
+            company_name, job_title, manual_jd_text=manual_jd_text or None
+        )
+        st.session_state.job_run = job_run
+        st.session_state.manual_jd_text = manual_jd_text or None
+        _run_until("2.2")
+
+    if run_next and company_name and job_title:
+        job_run = pipeline.create_or_get_job_run(
+            company_name, job_title, manual_jd_text=manual_jd_text or None
+        )
+        st.session_state.job_run = job_run
+        st.session_state.manual_jd_text = manual_jd_text or None
+        target = PipelineManager.get_next_label(last_completed_label)
+        _run_until(target)
 
     implemented_stages = [s for s in PIPELINE_STAGES if s.implemented]
     stage_map = {s.id: s for s in implemented_stages}
-
-    tab_defs: list[tuple[str, str]] = []
-    for s in implemented_stages:
-        if s.id == "S0_JOB_RESEARCH":
-            tab_defs.append(("0.1 Job Research Collect", "S0_JOB_RESEARCH_COLLECT"))
-            tab_defs.append(("0.2 Job Research Summarize", "S0_JOB_RESEARCH_SUMMARIZE"))
-        elif s.id == "S1_IVC":
-            tab_defs.append(("1-A Task Extractor", "S1A_TASK_EXTRACTOR"))
-            tab_defs.append(("1-B Phase Classifier", "S1B_PHASE_CLASSIFIER"))
-        elif s.id == "S3_WORKFLOW":
-            tab_defs.append(("2.1 Workflow Struct", "S2_WORKFLOW_STRUCT"))
-            tab_defs.append(("2.2 Workflow Mermaid", "S2_WORKFLOW_MERMAID"))
-        else:
-            tab_defs.append((s.label, s.id))
+    tab_defs: list[tuple[str, str]] = [(s.tab_title, s.id) for s in implemented_stages]
 
     if not tab_defs:
         st.info("아직 구현된 Stage가 없습니다.")
@@ -138,29 +142,37 @@ def main() -> None:
 
     for tab, (_, tab_id) in zip(tabs, tab_defs):
         with tab:
-            if tab_id == "S0_JOB_RESEARCH_COLLECT":
+            if tab_id == "S0_1_COLLECT":
                 st.subheader("0.1 Job Research Collect")
-                st.caption(stage_map["S0_JOB_RESEARCH"].description)
-                render_stage0_collect_tabs(job_run, job_research_collect_result, manual_jd_text_session)
-            elif tab_id == "S0_JOB_RESEARCH_SUMMARIZE":
+                st.caption(stage_map["S0_1_COLLECT"].description)
+                render_stage0_collect_tabs(job_run, stage0_collect_result, manual_jd_text_session)
+            elif tab_id == "S0_2_SUMMARIZE":
                 st.subheader("0.2 Job Research Summarize")
-                st.caption(stage_map["S0_JOB_RESEARCH"].description)
-                render_stage0_summarize_tabs(job_run, job_research_result, manual_jd_text_session)
-            elif tab_id == "S1A_TASK_EXTRACTOR":
-                st.subheader("1-A Task Extractor")
-                st.caption(stage_map["S1_IVC"].description)
-                render_stage1_task_extractor_tabs(job_run, job_research_result, ivc_result, manual_jd_text_session)
-            elif tab_id == "S1B_PHASE_CLASSIFIER":
-                st.subheader("1-B Phase Classifier")
-                st.caption(stage_map["S1_IVC"].description)
-                render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result, manual_jd_text_session)
-            elif tab_id == "S2_WORKFLOW_STRUCT":
+                st.caption(stage_map["S0_2_SUMMARIZE"].description)
+                render_stage0_summarize_tabs(job_run, stage0_summarize_result, manual_jd_text_session)
+            elif tab_id == "S1_1_TASK_EXTRACT":
+                st.subheader("1.1 Task Extractor")
+                st.caption(stage_map["S1_1_TASK_EXTRACT"].description)
+                render_stage1_task_extractor_tabs(
+                    job_run, stage0_summarize_result, stage1_task_result, manual_jd_text_session
+                )
+            elif tab_id == "S1_2_PHASE_CLASSIFY":
+                st.subheader("1.2 Phase Classifier")
+                st.caption(stage_map["S1_2_PHASE_CLASSIFY"].description)
+                render_stage1_phase_classifier_tabs(
+                    job_run, stage0_summarize_result, stage1_phase_result, manual_jd_text_session
+                )
+            elif tab_id == "S1_3_STATIC_CLASSIFY":
+                st.subheader("1.3 Static Task Classifier")
+                st.caption(stage_map["S1_3_STATIC_CLASSIFY"].description)
+                render_stage1_static_classifier_tabs(job_run, stage1_phase_result, stage1_static_result)
+            elif tab_id == "S2_1_WORKFLOW_STRUCT":
                 st.subheader("2.1 Workflow Struct")
-                st.caption("Stage 1 결과 기반 워크플로우 구조화")
-                render_stage2_workflow_struct_tabs(job_run, ivc_result, workflow_plan)
-            elif tab_id == "S2_WORKFLOW_MERMAID":
+                st.caption(stage_map["S2_1_WORKFLOW_STRUCT"].description)
+                render_stage2_workflow_struct_tabs(job_run, stage1_phase_result, workflow_plan)
+            elif tab_id == "S2_2_WORKFLOW_MERMAID":
                 st.subheader("2.2 Workflow Mermaid")
-                st.caption("워크플로우 구조를 Mermaid 코드로 시각화")
+                st.caption(stage_map["S2_2_WORKFLOW_MERMAID"].description)
                 render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid)
             else:
                 st.info("이 Stage의 로직은 아직 구현되지 않았습니다.")
@@ -320,7 +332,7 @@ def render_stage0_summarize_tabs(job_run, job_research_result, manual_jd_text: s
         )
 
 
-def render_stage1_task_extractor_tabs(job_run, job_research_result, ivc_result, manual_jd_text: str | None = None) -> None:
+def render_stage1_task_extractor_tabs(job_run, job_research_result, task_result, manual_jd_text: str | None = None) -> None:
     """Render Task Extractor with Stage 0-style flat sub tabs."""
     tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
 
@@ -343,42 +355,42 @@ def render_stage1_task_extractor_tabs(job_run, job_research_result, ivc_result, 
 
     # 결과
     with tabs[1]:
-        if ivc_result is None:
+        if task_result is None:
             st.warning("아직 IVC 결과가 없습니다. 사이드바에서 0~1단계 실행을 눌러주세요.")
         else:
             st.subheader("task_atoms")
-            if getattr(ivc_result, "task_atoms", None):
-                st.json([t.dict() if hasattr(t, "dict") else t for t in ivc_result.task_atoms])
+            if getattr(task_result, "task_atoms", None):
+                st.json([t.dict() if hasattr(t, "dict") else t for t in task_result.task_atoms])
             else:
                 st.info("task_atoms가 비어 있습니다. (LLM 스텁 또는 파이프라인 미실행)")
 
     # LLM 원문
     with tabs[2]:
-        llm_raw = getattr(ivc_result, "llm_raw_text", None) if ivc_result else None
+        llm_raw = getattr(task_result, "llm_raw_text", None) if task_result else None
         if llm_raw:
             st.text_area("LLM raw response", value=llm_raw, height=300, key="stage1a_llm_raw")
-        elif ivc_result:
+        elif task_result:
             st.info("LLM 원문이 없습니다. (스텁 또는 로깅 미연동)")
         else:
             st.info("아직 Task Extractor 결과가 없습니다.")
 
     # LLM 파싱된 JSON 텍스트
     with tabs[3]:
-        cleaned = getattr(ivc_result, "llm_cleaned_json", None) if ivc_result else None
+        cleaned = getattr(task_result, "llm_cleaned_json", None) if task_result else None
         if cleaned:
             st.text_area("정규화된 JSON 문자열", value=cleaned, height=300, key="stage1a_llm_cleaned")
-        elif ivc_result:
+        elif task_result:
             st.info("정규화된 JSON 문자열이 없습니다. (LLM 스텁 또는 로깅 미연동)")
-            st.json(ivc_result.dict())
+            st.json(task_result.dict())
         else:
             st.info("아직 Task Extractor 결과가 없습니다.")
 
     # 에러
     with tabs[4]:
-        llm_error = getattr(ivc_result, "llm_error", None) if ivc_result else None
+        llm_error = getattr(task_result, "llm_error", None) if task_result else None
         if llm_error:
             st.error(f"LLM error: {llm_error}")
-        elif ivc_result:
+        elif task_result:
             st.success("LLM 에러 없음 (또는 캐시/스텁).")
         else:
             st.info("아직 Task Extractor 결과가 없습니다.")
@@ -496,12 +508,96 @@ def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result
         )
 
 
-def render_stage2_workflow_struct_tabs(job_run, ivc_result, workflow_plan) -> None:
+def render_stage1_static_classifier_tabs(job_run, phase_result, static_result) -> None:
+    """Render Static Task Classifier tabs."""
+    tabs = st.tabs(["Input", "결과", "LLM Raw", "LLM Cleaned JSON", "Error", "설명", "I/O"])
+
+    with tabs[0]:
+        if phase_result is None:
+            st.warning("Phase Classifier 결과가 없습니다.")
+        else:
+            st.json(phase_result.dict())
+
+    with tabs[1]:
+        if static_result is None:
+            st.warning("Static 결과가 없습니다. 1.3 단계를 실행하세요.")
+        else:
+            st.subheader("task_static_meta")
+            st.dataframe(
+                [
+                    {
+                        "task_id": t.task_id,
+                        "task_korean": t.task_korean,
+                        "static_type_lv1": t.static_type_lv1,
+                        "domain_lv1": t.domain_lv1,
+                        "rag_required": t.rag_required,
+                        "value_score": t.value_score,
+                        "complexity_score": t.complexity_score,
+                        "value_complexity_quadrant": t.value_complexity_quadrant,
+                        "recommended_execution_env": t.recommended_execution_env,
+                    }
+                    for t in static_result.task_static_meta
+                ]
+            )
+            st.subheader("static_summary")
+            st.json(static_result.static_summary)
+
+    with tabs[2]:
+        llm_raw = getattr(static_result, "llm_raw_text", None) if static_result else None
+        if llm_raw:
+            st.text_area("LLM raw response", value=llm_raw, height=300, key="stage1_static_llm_raw")
+        elif static_result:
+            st.info("LLM 원문이 없습니다. (스텁 또는 로깅 미연동)")
+        else:
+            st.info("아직 Static 결과가 없습니다.")
+
+    with tabs[3]:
+        cleaned = getattr(static_result, "llm_cleaned_json", None) if static_result else None
+        if cleaned:
+            st.text_area("정규화된 JSON 문자열", value=cleaned, height=300, key="stage1_static_llm_cleaned")
+        elif static_result:
+            st.info("정규화된 JSON 문자열이 없습니다. (LLM 스텁 또는 로깅 미연동)")
+        else:
+            st.info("아직 Static 결과가 없습니다.")
+
+    with tabs[4]:
+        llm_error = getattr(static_result, "llm_error", None) if static_result else None
+        if llm_error:
+            st.error(f"LLM error: {llm_error}")
+        elif static_result:
+            st.success("LLM 에러 없음 (또는 캐시/스텁).")
+        else:
+            st.info("아직 Static 결과가 없습니다.")
+
+    with tabs[5]:
+        st.markdown(
+            """
+            **Stage 1.3 Static Task Classifier 흐름**
+            - 입력: Phase Classification 결과 (job_meta/raw_job_desc/task_atoms/ivc_tasks/phase_summary)
+            - LLM: prompts/static_task_classifier.txt
+            - 출력: task_static_meta (정적 유형/도메인/RAG/가치/복잡도/실행환경)
+            """
+        )
+
+    with tabs[6]:
+        st.markdown(
+            """
+            **입력**
+            - PhaseClassificationResult (job_meta, raw_job_desc, task_atoms, ivc_tasks, phase_summary)
+
+            **출력**
+            - task_static_meta, static_summary
+            - 디버그: llm_raw_text, llm_cleaned_json, llm_error
+            """
+        )
+
+
+def render_stage2_workflow_struct_tabs(job_run, phase_result, workflow_plan) -> None:
     """Render Workflow Struct (2.1) tabs."""
     tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
 
     with tabs[0]:
-        if job_run is None or ivc_result is None:
+        if job_run is None or phase_result is None:
             st.warning("Workflow Struct 입력이 없습니다. Stage 1 결과가 필요합니다.")
         else:
             st.json(
@@ -510,9 +606,9 @@ def render_stage2_workflow_struct_tabs(job_run, ivc_result, workflow_plan) -> No
                         "company_name": job_run.company_name,
                         "job_title": job_run.job_title,
                     },
-                    "ivc_tasks": [t.dict() if hasattr(t, "dict") else t for t in (ivc_result.ivc_tasks or [])],
-                    "task_atoms": [t.dict() if hasattr(t, "dict") else t for t in (ivc_result.task_atoms or [])],
-                    "phase_summary": ivc_result.phase_summary.dict() if hasattr(ivc_result, "phase_summary") else None,
+                    "ivc_tasks": [t.dict() if hasattr(t, "dict") else t for t in (phase_result.ivc_tasks or [])],
+                    "task_atoms": [t.dict() if hasattr(t, "dict") else t for t in (phase_result.task_atoms or [])],
+                    "phase_summary": phase_result.phase_summary.dict() if hasattr(phase_result, "phase_summary") else None,
                 }
             )
 

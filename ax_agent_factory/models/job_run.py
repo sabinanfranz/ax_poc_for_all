@@ -14,7 +14,12 @@ class JobRun:
     id: int | None
     company_name: str
     job_title: str
+    industry_context: str | None
+    business_goal: str | None
+    manual_jd_text: str | None
+    status: str | None
     created_at: datetime
+    updated_at: datetime
 
 
 @dataclass

@@ -1,10 +1,10 @@
-# Logic Flow (Stage 0~1 PoC)
-> Last updated: 2025-12-02 (by AX Agent Factory Codex)
+# Logic Flow (Stage 0~3 PoC)
+> Last updated: 2025-12-03 (by AX Agent Factory Codex)
 
 ## 1) End-to-End 개요
 - 입력: 회사명, 직무명, (선택) 수동 JD 텍스트.
-- PipelineManager가 JobRun 생성 → Stage 0 실행 → Stage 1 실행(선택) → Stage 2(워크플로우 구조화/머메이드) 실행(추가 예정) → UI 탭에서 결과 확인.
-- LLM 실패/키 부재 시에도 스텁으로 이어서 결과를 보여준다.
+- PipelineManager가 JobRun 생성 → Stage 0 실행 → Stage 1 실행(선택) → Stage 2(워크플로우 구조화/머메이드) 실행 → UI 탭에서 결과 확인.
+- LLM 실패/키 부재 시에도 스텁으로 이어서 결과를 보여준다(Workflow도 동일).
 
 ```mermaid
 graph TD

@@ -50,7 +50,17 @@ def test_run_job_research_saves_to_db(tmp_path, monkeypatch):
 
 
 def test_run_job_research_requires_id(monkeypatch):
-    job_run = JobRun(id=None, company_name="Acme", job_title="Analyst", created_at=datetime.utcnow())
+    job_run = JobRun(
+        id=None,
+        company_name="Acme",
+        job_title="Analyst",
+        industry_context=None,
+        business_goal=None,
+        manual_jd_text=None,
+        status=None,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
     fake_output = {"raw_job_desc": "", "research_sources": []}
     monkeypatch.setattr(
         "ax_agent_factory.infra.llm_client.call_job_research_collect",

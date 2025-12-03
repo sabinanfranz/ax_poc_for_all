@@ -1,5 +1,5 @@
 # AX Agent Factory 스키마
-> Last updated: 2025-12-02 (by AX Agent Factory Codex)
+> Last updated: 2025-12-03 (by AX Agent Factory Codex)
 
 ## 1. Stage 입출력 요약
 | Stage | Input | Output | 구현 상태 |
@@ -7,7 +7,9 @@
 | 0. Job Research | JobRun(company_name, job_title) + optional manual_jd_text | JobResearchResult(raw_job_desc, research_sources) + 디버그용 llm_raw_text/llm_error | 구현 & DB 저장(0.1 Collect → 0.2 Summarize) |
 | 1-A. IVC Task Extractor | JobInput(job_meta, raw_job_desc) | TaskExtractionResult(task_atoms[], llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) |
 | 1-B. IVC Phase Classifier | IVCTaskListInput(job_meta, task_atoms) | PhaseClassificationResult(ivc_tasks[], phase_summary, task_atoms, llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) |
-| 2+. DNA/Workflow/AX… | 설계만 존재 | - | 미구현 |
+| 2. DNA | - | - | 미구현(스텁) |
+| 3-A. Workflow Struct (UI 2.1) | PhaseClassificationResult dict(job_meta, raw_job_desc, ivc_tasks, task_atoms, phase_summary) | WorkflowPlan(stages, streams, nodes, edges, entry/exit_points, llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) |
+| 3-B. Workflow Mermaid (UI 2.2) | WorkflowPlan | MermaidDiagram(mermaid_code, warnings, llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) |
 
 ## 2. 도메인 모델 (dataclass)
 
@@ -136,14 +138,60 @@
 
 `IVCPipelineOutput = PhaseClassificationResult`
 
-## 4. LLM 출력 JSON 규칙
+## 4. Workflow Pydantic 모델 (`core/schemas/workflow.py`)
+
+### WorkflowStage / WorkflowStream
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| stage_id / stream_id | str | 고유 ID (`S1`, `S1_ST1` 등) |
+| name | str | 표시명 |
+| description | str \| None | 설명 |
+| stage_id (stream 전용) | str \| None | 상위 Stage |
+
+### WorkflowNode
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| node_id | str | 노드 ID |
+| label | str | 라벨(과업명) |
+| stage_id / stream_id | str \| None | 소속 Stage/Stream |
+| is_entry / is_exit / is_hub | bool | 진입/종료/분기·합류 플래그 |
+| notes | str \| None | 메모 |
+
+### WorkflowEdge
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| source | str | 출발 노드 ID |
+| target | str | 도착 노드 ID |
+| label | str \| None | 엣지 라벨 |
+
+### WorkflowPlan
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| workflow_name | str | 워크플로우 명칭 |
+| workflow_summary | str \| None | 요약 |
+| stages/streams/nodes/edges | list | 구조 요소 리스트 |
+| entry_points / exit_points | list[str] | 시작/종료 노드 ID 모음 |
+| notes | str \| None | 메모 |
+| llm_raw_text / llm_cleaned_json / llm_error | str \| None | 디버그 필드 |
+
+### MermaidDiagram
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| workflow_name | str | 워크플로우 명칭 |
+| mermaid_code | str | 노션 호환 Mermaid flowchart TD 코드 |
+| warnings | list[str] \| None | 경고 메시지 리스트 |
+| llm_raw_text / llm_cleaned_json / llm_error | str \| None | 디버그 필드 |
+
+## 5. LLM 출력 JSON 규칙
 - **단일 JSON 객체만** 응답(추가 설명/코드블록 금지).
 - 허용 top-level 키  
   - Task Extractor: ["job_meta", "task_atoms"]  
   - Phase Classifier: ["job_meta", "raw_job_desc", "task_atoms", "ivc_tasks", "phase_summary"]
+  - Workflow Struct: ["workflow_name","workflow_summary","stages","streams","nodes","edges","entry_points","exit_points","notes"]
+  - Workflow Mermaid: ["workflow_name","mermaid_code","warnings"]
 - 문자열에 포함된 줄바꿈/펜스 제거를 위해 `_extract_json_from_text` 사용 후 `_parse_json_candidates`로 정규화. 경미한 문법 오류는 sanitizer가 보정하고, 여전히 실패하면 InvalidLLMJsonError → 스텁으로 대체.
 
-## 5. 예시 페이로드
+## 6. 예시 페이로드
 
 ### Stage 0 출력 예시
 ```json
@@ -185,5 +233,30 @@
     "P3_EXECUTE_COMMIT": {"count": 0},
     "P4_ASSURE": {"count": 0}
   }
+}
+```
+
+### Stage 3-A 출력 예시 (WorkflowPlan)
+```json
+{
+  "workflow_name": "Data Analyst Workflow",
+  "stages": [{"stage_id": "S1", "name": "Sense/Decide"}],
+  "streams": [{"stream_id": "S1_ST1", "name": "Main", "stage_id": "S1"}],
+  "nodes": [
+    {"node_id": "T1", "label": "데이터 수집하기", "stage_id": "S1", "stream_id": "S1_ST1", "is_entry": true},
+    {"node_id": "T2", "label": "분석 결과 보고서 작성하기", "stage_id": "S1", "stream_id": "S1_ST1", "is_exit": true}
+  ],
+  "edges": [{"source": "T1", "target": "T2"}],
+  "entry_points": ["T1"],
+  "exit_points": ["T2"]
+}
+```
+
+### Stage 3-B 출력 예시 (MermaidDiagram)
+```json
+{
+  "workflow_name": "Data Analyst Workflow",
+  "mermaid_code": "flowchart TD\\n    T1[\"데이터 수집하기\"] --> T2[\"분석 결과 보고서 작성하기\"]",
+  "warnings": []
 }
 ```

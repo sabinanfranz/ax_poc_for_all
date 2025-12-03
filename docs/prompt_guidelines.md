@@ -1,5 +1,5 @@
 # AX Agent Factory – Prompt Guidelines
-> Last updated: 2025-12-02 (by AX Agent Factory Codex)
+> Last updated: 2025-12-03 (by AX Agent Factory Codex)
 
 ## 공통 원칙
 - **JSON Only**: 출력은 하나의 JSON 객체. 코드블록(````), 설명 텍스트 금지.
@@ -21,6 +21,14 @@
   - 출력 키: `job_meta`, `raw_job_desc`, `task_atoms`, `ivc_tasks`, `phase_summary` 외 금지.
   - Phase 정의/규칙을 짧게 제시하고, reason을 한국어 1~2문장으로 요구.
   - 주의: 예시는 `phase/reason` 등을 사용하지만, 스키마는 `ivc_phase/ivc_exec_subphase/primitive_lv1/classification_reason`을 기대하므로 프롬프트를 스키마에 맞춰 유지.
+- **Stage 3-A – Workflow Struct (`prompts/workflow_struct.txt`)**
+  - 입력 `job_meta`, `raw_job_desc`, `task_atoms`, `ivc_tasks`, `phase_summary`를 그대로 복사.
+  - 허용 top-level 키: `workflow_name`, `workflow_summary`, `stages`, `streams`, `nodes`, `edges`, `entry_points`, `exit_points`, `notes`.
+  - 노드/엣지 ID는 영문+숫자, entry/exit/hub 플래그를 분리해 반환.
+- **Stage 3-B – Workflow Mermaid (`prompts/workflow_mermaid.txt`)**
+  - 입력 `WorkflowPlan`을 그대로 사용해 노션 호환 Mermaid flowchart TD 코드 생성.
+  - 허용 top-level 키: `workflow_name`, `mermaid_code`, `warnings`.
+  - 코드블록 금지, mermaid_code만 포함된 단일 JSON을 요구.
 
 ## 버전/변경 관리
 - 프롬프트 변경 시: 변경 요약을 `docs/iteration_log.md`에 기록(날짜, 이유, 영향).

@@ -10,7 +10,7 @@
 task_atoms 배열 안에 구조화된 JSON으로 반환합니다.
 
 이 결과는 다음 단계(IVC-B Phase Classifier)의 입력으로 사용되며,
-여기서는 어떤 Phase/Primit  ive 라벨도 붙이지 않습니다.
+여기서는 어떤 Phase/Primitive 라벨도 붙이지 않습니다.
 
 [입력 JSON 스키마]
 - job_meta: 회사명, 직무명, 산업/맥락, 비즈니스 목표 등의 메타 정보
@@ -35,12 +35,19 @@ task_atoms 배열 안에 구조화된 JSON으로 반환합니다.
 2. job_meta는 입력 JSON의 job_meta를 **그대로 복사**합니다.
 3. task_atoms:
    - 모든 과업에 대해 고유한 task_id를 "T01", "T02", ... 형식으로 부여합니다.
-   - task_original_sentence에는 raw_job_desc에서 해당 과업의 근거가 된 문장이나 절을 그대로 적습니다.
+   - task_original_sentence에는 raw_job_desc에서 해당 과업의 근거가 된
+     **핵심 구절만 80~120자 이내로** 적습니다.
+     - 전체 문장이나 단락을 그대로 복사하지 말고,
+       과업과 직접적으로 연결되는 부분만 잘라서 사용하십시오.
+     - 너무 짧아서 맥락이 사라지지 않도록 하되,
+       불필요한 수식어·예시·부연 설명은 포함하지 않습니다.
    - task_korean에는 "[대상] [동사]하기" 형태로 정규화된 과업 문장을 적습니다.
    - task_english는 가능하면 짧게 영어로 번역하고, 불필요하면 null로 둡니다.
    - notes는 분리/정규화 과정에서 필요한 메모가 있으면 한두 문장으로 적고, 없으면 null로 둡니다.
-4. 입력 JSON에 포함되지 않은 새로운 top-level 필드를 추가하지 않습니다.
-   - 허용되는 top-level 키: ["job_meta", "raw_job_desc", "task_atoms"]
+4. 출력에는 raw_job_desc 필드를 포함하지 않습니다.
+   - raw_job_desc는 **입력에서만 사용**하며, 최종 출력 JSON에는 job_meta와 task_atoms만 포함합니다.
+5. 입력 JSON에 포함되지 않은 새로운 top-level 필드를 추가하지 않습니다.
+   - 허용되는 top-level 키: ["job_meta", "task_atoms"]
 
 [작업 절차]
 1. 입력으로 주어진 JSON 문자열을 파싱합니다.
@@ -49,9 +56,12 @@ task_atoms 배열 안에 구조화된 JSON으로 반환합니다.
    - 복합 문장은 여러 개의 과업으로 분해하고,
    - 불필요한 수식어는 제거하며,
    - "[대상] [동사]하기" 형태로 정규화합니다.
-4. 각 과업에 고유한 task_id를 부여하고 task_atoms 배열에 추가합니다.
-5. job_meta를 그대로 복사하고, task_atoms 배열과 함께 최종 JSON 객체를 구성합니다.
-6. 최종적으로, 위 [출력 JSON 스키마]를 만족하는 **순수 JSON 문자열** 한 개만 출력합니다.
+4. 각 과업에 대해:
+   - raw_job_desc에서 해당 과업의 근거가 된 핵심 구절을 80~120자 이내로 선택하여 task_original_sentence에 기록합니다.
+   - 동일 문장 안에 여러 과업이 있더라도, 각 과업별로 **필요 최소한의 구절만** 다시 선택해 기록합니다.
+5. 각 과업에 고유한 task_id를 부여하고 task_atoms 배열에 추가합니다.
+6. job_meta를 그대로 복사하고, task_atoms 배열과 함께 최종 JSON 객체를 구성합니다.
+7. 최종적으로, 위 [출력 JSON 스키마]를 만족하는 **순수 JSON 문자열** 한 개만 출력합니다.
 
 [출력 JSON one-shot 예시]
 아래는 간단한 예시입니다. 실제 출력에서는 입력 job_meta와 raw_job_desc에 맞게 내용을 수정하세요.

@@ -1,5 +1,5 @@
 # AX Agent Factory – Architecture
-> Last updated: 2025-12-02 (by AX Agent Factory Codex)
+> Last updated: 2025-12-03 (by AX Agent Factory Codex)
 
 ## 1. 시스템 개요 (레이어)
 - **UI**: `app.py` (Streamlit). 회사/직무 입력 → Stage 0/1 실행 버튼 → 결과/LLM 원문 탭 표시.
@@ -7,16 +7,18 @@
   - `core/pipeline_manager.py`: Stage 실행/캐시 오케스트레이션.
   - `core/research/*`: Stage 0 Job Research (0.1 Collect → 0.2 Summarize).
   - `core/ivc/*`: Stage 1 IVC(Task Extractor, Phase Classifier, pipeline).
-  - `core/dna.py`, `core/workflow.py`: Stage 2/3 스텁.
+  - `core/workflow.py`: Stage 3 Workflow Struct(2.1) → Mermaid(2.2) 파이프라인(LLM/스텁).
+  - `core/dna.py`: Stage 2 DNA 스텁.
 - **Infra**: 공통 유틸.
   - `infra/db.py`: SQLite CRUD(job_runs, job_research_results, job_research_collect_results), 경로 `AX_DB_PATH` 기본 `data/ax_factory.db`.
-  - `infra/llm_client.py`: Gemini web_browsing 호출 + JSON 파싱/스텁. Stage 0/1용 `call_job_research_*`, `call_task_extractor`, `call_phase_classifier` 헬퍼를 제공(키 없을 때 스텁).
+  - `infra/llm_client.py`: Gemini web_browsing 호출 + JSON 파싱/스텁. Stage 0/1/3용 `call_job_research_*`, `call_task_extractor`, `call_phase_classifier`, `call_workflow_struct`, `call_workflow_mermaid` 헬퍼 제공(키 없을 때 스텁).
   - `infra/prompts.py`: 프롬프트 파일 로더(LRU 캐시).
   - `infra/logging_config.py`: 콘솔+회전 파일 로그 초기화.
 - **Models/Schemas**:
   - `models/job_run.py`: JobRun, JobResearchResult, JobResearchCollectResult dataclass.
   - `models/stages.py`: Stage 메타(PIPELINE_STAGES).
   - `core/schemas/common.py`: IVC 입력/출력 Pydantic 모델(JobMeta, JobInput, IVCAtomicTask, IVCTask, PhaseSummary 등).
+  - `core/schemas/workflow.py`: WorkflowPlan, MermaidDiagram 등 Stage 3 결과 스키마.
 - **Prompts**: `prompts/*.txt`로 Stage별 프롬프트 분리.
 
 ## 2. PipelineManager 역할
@@ -37,13 +39,19 @@
   - 1-B Phase Classifier: `IVCPhaseClassifier.run` → `ivc_tasks[]`, `phase_summary`, `task_atoms` 첨부.
   - 오케스트레이션: `core/ivc/pipeline.py::run_ivc_pipeline` → `PipelineManager.run_stage_1_ivc`.
   - 영속화: 아직 없음(메모리/세션 보관).
-- **Stage 2~3**: dna/workflow 스텁만 존재(미구현).
+- **Stage 2: DNA**
+  - 미구현 스텁만 존재.
+- **Stage 3: Workflow (UI에서는 2.1/2.2 탭)**
+  - 입력: PhaseClassificationResult dict(raw_job_desc, ivc_tasks, task_atoms, phase_summary, job_meta).
+  - 3-A Workflow Struct: `core/workflow.py::WorkflowStructPlanner.run` → `call_workflow_struct` → `WorkflowPlan`.
+  - 3-B Workflow Mermaid: `WorkflowMermaidRenderer.run` → `call_workflow_mermaid` → `MermaidDiagram`.
+  - 영속화: 없음(세션/메모리). LLM 실패/키 부재 시 스텁으로 노드/엣지/머메이드 코드 생성.
 
 ## 4. LLM/프롬프트/로깅
-- **LLM**: Gemini web_browsing(google-genai). 기본 `gemini-2.5-flash`(env `GEMINI_MODEL`). 키/SDK 없으면 스텁. Stage 1은 `call_task_extractor` / `call_phase_classifier` 헬퍼로 동일한 파서/스텁/로그 정책을 공유한다.
-- **프롬프트**: `prompts/job_research_collect.txt`, `prompts/job_research_summarize.txt`, `prompts/ivc_task_extractor.txt`, `prompts/ivc_phase_classifier.txt`. JSON-only 규칙, 코드블록 금지, one-shot 예시 포함.
+- **LLM**: Gemini web_browsing(google-genai). 기본 `gemini-2.5-flash`(env `GEMINI_MODEL`). 키/SDK 없으면 스텁. Stage 1/3은 `call_task_extractor` / `call_phase_classifier` / `call_workflow_struct` / `call_workflow_mermaid` 헬퍼로 동일한 파서/스텁/로그 정책을 공유한다.
+- **프롬프트**: `prompts/job_research_collect.txt`, `prompts/job_research_summarize.txt`, `prompts/ivc_task_extractor.txt`, `prompts/ivc_phase_classifier.txt`, `prompts/workflow_struct.txt`, `prompts/workflow_mermaid.txt`. JSON-only 규칙, 코드블록 금지, one-shot 예시 포함.
 - **로깅**: `infra/logging_config.setup_logging`이 콘솔/파일 핸들러 구성(중복 방지 플래그 사용). UI에서 `logs/app.log` tail을 expander로 노출.
 
 ## 5. 테스트 및 관측 포인트
-- 테스트: `ax_agent_factory/tests`에서 DB 캐시, Stage 0 결과 저장, Stage 1 파이프라인 파싱/스텁 동작 검증.
+- 테스트: `ax_agent_factory/tests`에서 DB 캐시, Stage 0 결과 저장, Stage 1/3 파이프라인 파싱/스텁 동작 검증.
 - 관측: Stage별 logger 사용, UI 탭에서 LLM raw/error 확인. 향후 JSON 밸리데이션 강화/메트릭 추가 예정.

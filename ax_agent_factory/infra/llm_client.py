@@ -25,6 +25,29 @@ except ImportError:  # pragma: no cover - handled by stub fallback
 logger = logging.getLogger(__name__)
 
 
+def _extract_usage_tokens(response: Any | None = None) -> dict[str, Optional[int]]:
+    """
+    Extract token usage counts from google-genai response metadata.
+
+    Returns a dict with tokens_prompt/completion/total keys defaulting to None when
+    usage metadata or specific counts are unavailable.
+    """
+    try:
+        usage_metadata = getattr(response, "usage_metadata", None) if response is not None else None
+    except Exception:  # pragma: no cover - defensive against unexpected objects
+        usage_metadata = None
+
+    prompt_tokens = getattr(usage_metadata, "prompt_token_count", None) if usage_metadata else None
+    completion_tokens = getattr(usage_metadata, "candidates_token_count", None) if usage_metadata else None
+    total_tokens = getattr(usage_metadata, "total_token_count", None) if usage_metadata else None
+
+    return {
+        "tokens_prompt": prompt_tokens if isinstance(prompt_tokens, int) else None,
+        "tokens_completion": completion_tokens if isinstance(completion_tokens, int) else None,
+        "tokens_total": total_tokens if isinstance(total_tokens, int) else None,
+    }
+
+
 class InvalidLLMJsonError(ValueError):
     """Raised when LLM text cannot be converted into valid JSON."""
 
@@ -49,6 +72,7 @@ class LLMClient:
         """
         logger.info("LLMClient.call invoked with model=%s", self.model_name)
         logger.debug("LLM prompt preview (first 200 chars): %s", prompt[:200])
+        usage = _extract_usage_tokens()
         _safe_save_llm_log(
             stage_name="llm_client_call",
             job_run_id=None,
@@ -66,6 +90,9 @@ class LLMClient:
             error_type="NotImplementedError",
             error_message="LLM API not implemented",
             latency_ms=None,
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         raise NotImplementedError("LLM API 연동은 별도 구현 예정")
 
@@ -77,7 +104,7 @@ def call_gemini_job_research(
     company_name: str,
     job_title: str,
     manual_jd_text: str | None = None,
-    max_tokens: int = 16384,
+    max_tokens: int = 81920,
     *,
     model: str | None = None,
     job_run_id: Optional[int] = None,
@@ -133,6 +160,14 @@ def call_gemini_job_research(
     }
     raw_text = ""
     cleaned = ""
+    usage = _extract_usage_tokens()
+    usage = _extract_usage_tokens()
+    usage = _extract_usage_tokens()
+    usage = _extract_usage_tokens()
+    usage = _extract_usage_tokens()
+    usage = _extract_usage_tokens()
+    usage = _extract_usage_tokens()
+    usage = _extract_usage_tokens()
 
     if genai is None or os.environ.get("GOOGLE_API_KEY") is None:
         logger.warning("google-genai SDK or GOOGLE_API_KEY missing; returning stub job research result")
@@ -151,6 +186,9 @@ def call_gemini_job_research(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -168,6 +206,7 @@ def call_gemini_job_research(
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config=config,
         )
+        usage = _extract_usage_tokens(response)
         raw_text = _extract_text_from_response(response)
         logger.info("Gemini raw response received. length=%d", len(raw_text))
         cleaned = _normalize_json_text(_clean_json_text(raw_text))
@@ -188,6 +227,9 @@ def call_gemini_job_research(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return parsed
     except Exception as exc:  # pragma: no cover - depends on runtime response
@@ -213,6 +255,9 @@ def call_gemini_job_research(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -221,7 +266,7 @@ def call_job_research_collect(
     company_name: str,
     job_title: str,
     manual_jd_text: str | None = None,
-    max_tokens: int = 16384,
+    max_tokens: int = 81920,
     *,
     model: str | None = None,
     job_run_id: Optional[int] = None,
@@ -252,6 +297,7 @@ def call_job_research_collect(
     }
     raw_text = ""
     cleaned = ""
+    usage = _extract_usage_tokens()
 
     if genai is None or os.environ.get("GOOGLE_API_KEY") is None:
         logger.warning("google-genai SDK or GOOGLE_API_KEY missing; returning stub collect result")
@@ -270,6 +316,9 @@ def call_job_research_collect(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -287,6 +336,7 @@ def call_job_research_collect(
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config=config,
         )
+        usage = _extract_usage_tokens(response)
 
         raw_text = _extract_text_from_response(response)
         logger.info("Collect raw response received. length=%d", len(raw_text))
@@ -309,6 +359,9 @@ def call_job_research_collect(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return parsed
     except InvalidLLMJsonError as exc:
@@ -334,6 +387,9 @@ def call_job_research_collect(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
     except Exception as exc:  # pragma: no cover - runtime dependent
@@ -359,6 +415,9 @@ def call_job_research_collect(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -367,7 +426,7 @@ def call_job_research_summarize(
     job_meta: Dict[str, Any],
     raw_sources: list[Dict[str, Any]],
     manual_jd_text: str | None = None,
-    max_tokens: int = 16384,
+    max_tokens: int = 81920,
     *,
     model: str | None = None,
     job_run_id: Optional[int] = None,
@@ -397,6 +456,7 @@ def call_job_research_summarize(
     }
     raw_text = ""
     cleaned = ""
+    usage = _extract_usage_tokens()
 
     if genai is None or os.environ.get("GOOGLE_API_KEY") is None:
         logger.warning("google-genai SDK or GOOGLE_API_KEY missing; returning stub summarize result")
@@ -415,6 +475,9 @@ def call_job_research_summarize(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -428,6 +491,7 @@ def call_job_research_summarize(
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config=config,
         )
+        usage = _extract_usage_tokens(response)
 
         raw_text = _extract_text_from_response(response)
         logger.info("Summarize raw response received. length=%d", len(raw_text))
@@ -454,6 +518,9 @@ def call_job_research_summarize(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return parsed
     except InvalidLLMJsonError as exc:
@@ -479,6 +546,9 @@ def call_job_research_summarize(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
     except Exception as exc:  # pragma: no cover - runtime dependent
@@ -504,6 +574,9 @@ def call_job_research_summarize(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -511,7 +584,7 @@ def call_job_research_summarize(
 def call_task_extractor(
     job_input: Dict[str, Any],
     *,
-    max_tokens: int = 16384,
+    max_tokens: int = 81920,
     model: str | None = None,
     job_run_id: Optional[int] = None,
     stage_name: str = "stage1_task_extractor",
@@ -529,6 +602,7 @@ def call_task_extractor(
         "model": model or DEFAULT_GEMINI_MODEL,
         "max_output_tokens": max_tokens,
     }
+    usage = _extract_usage_tokens()
 
     # If a custom llm_client is provided (e.g., FakeLLMClient in tests), use it directly.
     if llm_client_override is not None:
@@ -560,6 +634,9 @@ def call_task_extractor(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -573,6 +650,7 @@ def call_task_extractor(
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config=config,
         )
+        usage = _extract_usage_tokens(response)
         raw_text = _extract_text_from_response(response)
         logger.info("Task Extractor raw response received. length=%d", len(raw_text))
         sanitized_text = _sanitize_task_extractor_text(raw_text)
@@ -595,6 +673,9 @@ def call_task_extractor(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return parsed
     except InvalidLLMJsonError as exc:
@@ -614,6 +695,9 @@ def call_task_extractor(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
     except Exception as exc:  # pragma: no cover - runtime dependent
@@ -633,6 +717,9 @@ def call_task_extractor(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -640,7 +727,7 @@ def call_task_extractor(
 def call_phase_classifier(
     task_list_input: Dict[str, Any],
     *,
-    max_tokens: int = 16384,
+    max_tokens: int = 81920,
     model: str | None = None,
     job_run_id: Optional[int] = None,
     stage_name: str = "stage1_phase_classifier",
@@ -658,6 +745,7 @@ def call_phase_classifier(
         "model": model or DEFAULT_GEMINI_MODEL,
         "max_output_tokens": max_tokens,
     }
+    usage = _extract_usage_tokens()
 
     if llm_client_override is not None:
         raw_output = llm_client_override.call(prompt)
@@ -688,6 +776,9 @@ def call_phase_classifier(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -701,6 +792,7 @@ def call_phase_classifier(
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config=config,
         )
+        usage = _extract_usage_tokens(response)
         raw_text = _extract_text_from_response(response)
         logger.info("Phase Classifier raw response received. length=%d", len(raw_text))
         sanitized_text = _sanitize_phase_classifier_text(raw_text)
@@ -723,6 +815,9 @@ def call_phase_classifier(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return parsed
     except InvalidLLMJsonError as exc:
@@ -742,6 +837,9 @@ def call_phase_classifier(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
     except Exception as exc:  # pragma: no cover - runtime dependent
@@ -761,14 +859,43 @@ def call_phase_classifier(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
+
+
+def call_static_task_classifier(
+    static_input: Dict[str, Any],
+    *,
+    max_tokens: int = 81920,
+    model: str | None = None,
+    job_run_id: Optional[int] = None,
+    stage_name: str = "stage1_static_classifier",
+    prompt_version: Optional[str] = None,
+    llm_client_override: Any = None,
+) -> Dict[str, Any]:
+    """Stage 1.2 Static Classifier: enrich tasks with static meta."""
+    prompt_template = _load_prompt("static_task_classifier")
+    prompt = prompt_template.replace("{input_json}", json.dumps(static_input, ensure_ascii=False))
+    return _generic_llm_json_call(
+        prompt=prompt,
+        model=model,
+        max_tokens=max_tokens,
+        job_run_id=job_run_id,
+        stage_name=stage_name,
+        prompt_version=prompt_version,
+        llm_client_override=llm_client_override,
+        sanitizer=_sanitize_phase_classifier_text,
+        stub_factory=lambda **extra: _stub_static_task_classifier(static_input, **extra),
+    )
 
 
 def call_workflow_struct(
     workflow_input: Dict[str, Any],
     *,
-    max_tokens: int = 16384,
+    max_tokens: int = 81920,
     model: str | None = None,
     job_run_id: Optional[int] = None,
     stage_name: str = "stage2_workflow_struct",
@@ -794,7 +921,7 @@ def call_workflow_struct(
 def call_workflow_mermaid(
     workflow_plan: Dict[str, Any],
     *,
-    max_tokens: int = 16384,
+    max_tokens: int = 81920,
     model: str | None = None,
     job_run_id: Optional[int] = None,
     stage_name: str = "stage2_workflow_mermaid",
@@ -956,6 +1083,43 @@ def _stub_phase_classifier(task_list_input: Dict[str, Any], **extra: Any) -> Dic
     return stub
 
 
+def _stub_static_task_classifier(static_input: Dict[str, Any], **extra: Any) -> Dict[str, Any]:
+    """Stub for Stage 1.2 static classifier."""
+    job_meta = static_input.get("job_meta", {}) if isinstance(static_input, dict) else {}
+    task_atoms = static_input.get("task_atoms", []) if isinstance(static_input, dict) else []
+    static_meta = []
+    for atom in task_atoms:
+        static_meta.append(
+            {
+                "task_id": atom.get("task_id"),
+                "task_korean": atom.get("task_korean"),
+                "static_type_lv1": "GENERAL",
+                "static_type_lv2": None,
+                "domain_lv1": None,
+                "domain_lv2": None,
+                "rag_required": False,
+                "rag_reason": None,
+                "value_score": None,
+                "complexity_score": None,
+                "value_complexity_quadrant": "UNKNOWN",
+                "recommended_execution_env": "human_in_loop",
+                "autoability_reason": None,
+                "data_entities": [],
+                "tags": [],
+            }
+        )
+    stub = {
+        "job_meta": job_meta,
+        "task_static_meta": static_meta,
+        "static_summary": {},
+    }
+    if extra:
+        stub.update(extra)
+    if "_raw_text" not in stub and "raw_text" in stub:
+        stub["_raw_text"] = stub["raw_text"]
+    return stub
+
+
 def _stub_workflow_struct(workflow_input: Dict[str, Any], **extra: Any) -> Dict[str, Any]:
     """Stub for Stage 2.1 Workflow structuring."""
     job_title = workflow_input.get("job_meta", {}).get("job_title", "Workflow")
@@ -1010,6 +1174,7 @@ def _generic_llm_json_call(
     started = time.time()
     raw_text = ""
     cleaned = ""
+    usage = _extract_usage_tokens()
     input_payload = {
         "prompt": prompt,
         "model": model or DEFAULT_GEMINI_MODEL,
@@ -1045,6 +1210,9 @@ def _generic_llm_json_call(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -1057,6 +1225,7 @@ def _generic_llm_json_call(
             contents=[{"role": "user", "parts": [{"text": prompt}]}],
             config=config,
         )
+        usage = _extract_usage_tokens(response)
         raw_text = _extract_text_from_response(response)
         logger.info("%s raw response received. length=%d", stage_name, len(raw_text))
         json_text = sanitizer(raw_text)
@@ -1079,6 +1248,9 @@ def _generic_llm_json_call(
             error_type=None,
             error_message=None,
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return parsed
     except InvalidLLMJsonError as exc:
@@ -1098,6 +1270,9 @@ def _generic_llm_json_call(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
     except Exception as exc:  # pragma: no cover - runtime dependent
@@ -1117,6 +1292,9 @@ def _generic_llm_json_call(
             error_type=exc.__class__.__name__,
             error_message=str(exc),
             latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
         )
         return stub
 
@@ -1317,5 +1495,14 @@ def _safe_save_llm_log(
             tokens_total=tokens_total,
         )
         db.save_llm_call_log(log)
+        logger.info(
+            "LLM call logged stage=%s status=%s latency_ms=%s tokens_prompt=%s tokens_completion=%s tokens_total=%s",
+            stage_name,
+            status,
+            latency_ms,
+            tokens_prompt,
+            tokens_completion,
+            tokens_total,
+        )
     except Exception:  # pragma: no cover - logging must not break flow
         logger.exception("Failed to persist LLM call log")

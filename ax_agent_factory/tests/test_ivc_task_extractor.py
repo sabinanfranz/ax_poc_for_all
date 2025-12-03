@@ -4,6 +4,7 @@ import pytest
 
 from ax_agent_factory.core.ivc.task_extractor import IVCTaskExtractor
 from ax_agent_factory.core.schemas.common import JobInput
+from ax_agent_factory.infra import prompts
 from ax_agent_factory.infra.llm_client import LLMClient
 
 
@@ -66,9 +67,10 @@ def _make_payload(job_input: JobInput):
         lambda payload: "다음은 결과입니다:\n" + json.dumps(payload, ensure_ascii=False) + "\n감사합니다.",  # with narration
     ],
 )
-def test_task_extractor_parses_wrapped_json(job_input, wrapped_output_builder):
+def test_task_extractor_parses_wrapped_json(job_input, wrapped_output_builder, monkeypatch):
     payload = _make_payload(job_input)
     raw_output = wrapped_output_builder(payload)
+    monkeypatch.setattr(prompts, "load_prompt", lambda name: "{input_json}")
     extractor = IVCTaskExtractor(llm_client=FakeLLMClient([raw_output]))
 
     result = extractor.run(job_input)
@@ -78,9 +80,10 @@ def test_task_extractor_parses_wrapped_json(job_input, wrapped_output_builder):
     assert all(atom.task_korean.endswith("하기") for atom in result.task_atoms)
 
 
-def test_task_extractor_records_llm_debug(job_input):
+def test_task_extractor_records_llm_debug(job_input, monkeypatch):
     payload = _make_payload(job_input)
     raw_output = "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
+    monkeypatch.setattr(prompts, "load_prompt", lambda name: "{input_json}")
     extractor = IVCTaskExtractor(llm_client=FakeLLMClient([raw_output]))
 
     result = extractor.run(job_input)
@@ -90,10 +93,11 @@ def test_task_extractor_records_llm_debug(job_input):
     assert result.llm_error is None
 
 
-def test_task_extractor_sanitizes_trailing_brace(job_input):
+def test_task_extractor_sanitizes_trailing_brace(job_input, monkeypatch):
     payload = _make_payload(job_input)
     broken = json.dumps(payload, ensure_ascii=False).replace('"raw_job_desc": "', '"raw_job_desc": "').replace('", "task_atoms"', '"}, "task_atoms"')
     raw_output = f"```json\n{broken}\n```"
+    monkeypatch.setattr(prompts, "load_prompt", lambda name: "{input_json}")
     extractor = IVCTaskExtractor(llm_client=FakeLLMClient([raw_output]))
 
     result = extractor.run(job_input)

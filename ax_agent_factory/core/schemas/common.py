@@ -6,6 +6,13 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+# Compatibility alias for Pydantic v1 to expose model_dump like v2
+if not hasattr(BaseModel, "model_dump"):  # type: ignore[attr-defined]
+    def _model_dump(self, *args, **kwargs):
+        return self.dict(*args, **kwargs)
+
+    BaseModel.model_dump = _model_dump  # type: ignore[attr-defined]
+
 
 class JobMeta(BaseModel):
     """직무 메타 정보."""
@@ -82,6 +89,37 @@ class PhaseClassificationResult(BaseModel):
     ivc_tasks: List[IVCTask]
     phase_summary: PhaseSummary
     task_atoms: Optional[List[IVCAtomicTask]] = None
+    llm_raw_text: Optional[str] = None
+    llm_cleaned_json: Optional[str] = None
+    llm_error: Optional[str] = None
+
+
+class TaskStaticMeta(BaseModel):
+    """Static classifier output for a single task."""
+
+    task_id: str
+    task_korean: str
+    static_type_lv1: str
+    static_type_lv2: Optional[str]
+    domain_lv1: Optional[str]
+    domain_lv2: Optional[str]
+    rag_required: bool
+    rag_reason: Optional[str]
+    value_score: Optional[int]
+    complexity_score: Optional[int]
+    value_complexity_quadrant: str
+    recommended_execution_env: str
+    autoability_reason: Optional[str]
+    data_entities: List[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)
+
+
+class StaticClassificationResult(BaseModel):
+    """Static classifier output across tasks."""
+
+    job_meta: JobMeta
+    task_static_meta: List[TaskStaticMeta]
+    static_summary: dict
     llm_raw_text: Optional[str] = None
     llm_cleaned_json: Optional[str] = None
     llm_error: Optional[str] = None

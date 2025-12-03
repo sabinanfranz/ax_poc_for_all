@@ -4,7 +4,7 @@ import pytest
 
 from ax_agent_factory.core.ivc.pipeline import run_ivc_pipeline
 from ax_agent_factory.core.schemas.common import JobInput
-from ax_agent_factory.infra import prompts
+from ax_agent_factory.infra import db, prompts
 from ax_agent_factory.infra.llm_client import LLMClient
 
 
@@ -24,10 +24,10 @@ class FakeLLMClient(LLMClient):
         return resp
 
 
-def test_ivc_pipeline_happy_path():
+def test_ivc_pipeline_happy_path(monkeypatch):
     # Monkeypatch prompt loader to avoid file IO
     prompts.load_prompt.cache_clear()
-    prompts.load_prompt = lambda name: "{input_json}"
+    monkeypatch.setattr(prompts, "load_prompt", lambda name: "{input_json}")
 
     job_input = JobInput(
         job_meta={
@@ -103,7 +103,7 @@ def test_ivc_pipeline_happy_path():
     assert output.raw_job_desc == job_input.raw_job_desc
 
 
-def test_ivc_pipeline_raises_on_bad_json():
+def test_ivc_pipeline_raises_on_bad_json(monkeypatch):
     job_input = JobInput(
         job_meta={
             "company_name": "Acme",
@@ -114,8 +114,75 @@ def test_ivc_pipeline_raises_on_bad_json():
         raw_job_desc="데이터를 수집하고 보고서를 작성한다.",
     )
 
+    prompts.load_prompt.cache_clear()
+    monkeypatch.setattr(prompts, "load_prompt", lambda name: "{input_json}")
     fake_llm = FakeLLMClient(["{not json}", "{also bad json}"])
     output = run_ivc_pipeline(job_input, llm_client=fake_llm)
 
     assert output.ivc_tasks  # stub fallback
     assert output.phase_summary.P1_SENSE["count"] == len(output.ivc_tasks)
+
+
+def test_ivc_pipeline_persists_job_tasks(tmp_path, monkeypatch):
+    prompts.load_prompt.cache_clear()
+    monkeypatch.setattr(prompts, "load_prompt", lambda name: "{input_json}")
+    db_path = tmp_path / "ivc.db"
+    db.set_db_path(str(db_path))
+    job_run = db.create_or_get_job_run("Acme", "Data Analyst")
+
+    job_input = JobInput(
+        job_meta={
+            "company_name": "Acme",
+            "job_title": "Data Analyst",
+            "industry_context": "Tech",
+            "business_goal": None,
+        },
+        raw_job_desc="데이터를 수집하고 보고서를 작성한다.",
+    )
+
+    extractor_output = {
+        "job_meta": job_input.job_meta.model_dump(),
+        "raw_job_desc": job_input.raw_job_desc,
+        "task_atoms": [
+            {
+                "task_id": "T01",
+                "task_original_sentence": "데이터를 수집한다.",
+                "task_korean": "데이터 수집하기",
+                "task_english": "collect data",
+                "notes": None,
+            }
+        ],
+    }
+
+    classifier_output = {
+        "job_meta": job_input.job_meta.model_dump(),
+        "raw_job_desc": job_input.raw_job_desc,
+        "ivc_tasks": [
+            {
+                "task_id": "T01",
+                "task_korean": "데이터 수집하기",
+                "task_original_sentence": "데이터를 수집한다.",
+                "ivc_phase": "P1_SENSE",
+                "ivc_exec_subphase": None,
+                "primitive_lv1": "SENSE",
+                "classification_reason": "sense",
+            }
+        ],
+        "phase_summary": {
+            "P1_SENSE": {"count": 1},
+            "P2_DECIDE": {"count": 0},
+            "P3_EXECUTE_TRANSFORM": {"count": 0},
+            "P3_EXECUTE_TRANSFER": {"count": 0},
+            "P3_EXECUTE_COMMIT": {"count": 0},
+            "P4_ASSURE": {"count": 0},
+        },
+    }
+
+    fake_llm = FakeLLMClient(
+        [json.dumps(extractor_output, ensure_ascii=False), json.dumps(classifier_output, ensure_ascii=False)]
+    )
+    run_ivc_pipeline(job_input, llm_client=fake_llm, job_run_id=job_run.id)
+
+    tasks = db.get_job_tasks(job_run.id)
+    assert len(tasks) == 1
+    assert tasks[0]["task_korean"] == "데이터 수집하기"

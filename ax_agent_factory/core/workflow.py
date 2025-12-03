@@ -7,10 +7,13 @@ from typing import Optional
 
 from ax_agent_factory.core.schemas.common import JobMeta
 from ax_agent_factory.core.schemas.workflow import MermaidDiagram, WorkflowPlan
+from ax_agent_factory.infra import db
 from ax_agent_factory.infra.llm_client import (
     InvalidLLMJsonError,
     call_workflow_mermaid,
     call_workflow_struct,
+    _stub_workflow_mermaid,
+    _stub_workflow_struct,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,9 +44,10 @@ class WorkflowStructPlanner:
                 result.llm_error = llm_output.get("llm_error")  # type: ignore[attr-defined]
             logger.info("Workflow Struct succeeded. nodes=%d edges=%d", len(result.nodes), len(result.edges))
             return result
-        except InvalidLLMJsonError:
+        except InvalidLLMJsonError as exc:
             logger.error("Workflow Struct JSON parsing error", exc_info=True)
-            raise
+            stub = _stub_workflow_struct(payload, llm_error=str(exc))
+            return WorkflowPlan(**stub)
         except Exception:
             logger.error("Workflow Struct unexpected error", exc_info=True)
             raise
@@ -66,19 +70,31 @@ class WorkflowMermaidRenderer:
                 result.llm_error = llm_output.get("llm_error")  # type: ignore[attr-defined]
             logger.info("Workflow Mermaid rendering succeeded. code_length=%d", len(result.mermaid_code))
             return result
-        except InvalidLLMJsonError:
+        except InvalidLLMJsonError as exc:
             logger.error("Workflow Mermaid JSON parsing error", exc_info=True)
-            raise
+            stub = _stub_workflow_mermaid(workflow_plan.model_dump(), llm_error=str(exc))
+            return MermaidDiagram(**stub)
         except Exception:
             logger.error("Workflow Mermaid unexpected error", exc_info=True)
             raise
 
 
-def run_workflow(job_meta: JobMeta, ivc_payload: dict, *, llm_client=None) -> tuple[WorkflowPlan, MermaidDiagram]:
+def run_workflow(
+    job_meta: JobMeta,
+    ivc_payload: dict,
+    *,
+    job_run_id: Optional[int] = None,
+    llm_client=None,
+) -> tuple[WorkflowPlan, MermaidDiagram]:
     """Stage 2 파이프라인: 2.1 구조화 → 2.2 머메이드."""
     planner = WorkflowStructPlanner(llm_client=llm_client)
     renderer = WorkflowMermaidRenderer(llm_client=llm_client)
 
     plan = planner.run(job_meta, ivc_payload)
+    if job_run_id is not None:
+        try:
+            db.apply_workflow_plan(job_run_id, plan)
+        except Exception:
+            logger.exception("Failed to persist workflow plan to job_tasks/job_task_edges")
     mermaid = renderer.run(plan)
     return plan, mermaid

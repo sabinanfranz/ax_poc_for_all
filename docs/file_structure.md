@@ -1,5 +1,5 @@
 # File Structure
-> Last updated: 2025-12-02 (by AX Agent Factory Codex)
+> Last updated: 2025-12-03 (by AX Agent Factory Codex)
 
 ```
 ax_agent_factory/
@@ -16,11 +16,12 @@ ax_agent_factory/
       phase_classifier.py     # Stage 1-B: IVC Phase Classifier (LLM JSON→ivc_tasks, 스텁 지원)
       pipeline.py             # Task Extractor → Phase Classifier 연결
     dna.py                    # Stage 2 DNA 스텁
-    workflow.py               # Stage 3 Workflow 스텁
+    workflow.py               # Stage 3 Workflow Struct(2.1) → Mermaid(2.2)
     schemas/common.py         # IVC 입력/출력 Pydantic 모델
+    schemas/workflow.py       # WorkflowPlan / MermaidDiagram Pydantic 모델
   infra/
     db.py                     # SQLite CRUD(job_runs, job_research_results, job_research_collect_results), AX_DB_PATH로 경로 설정
-    llm_client.py             # Gemini web_browsing 호출기 + JSON 파서/스텁
+    llm_client.py             # Gemini web_browsing 호출기 + JSON 파서/스텁(Stage 0/1/3)
     prompts.py                # 프롬프트 로더(LRU 캐시)
     logging_config.py         # 콘솔+회전 파일 로깅 설정
   models/
@@ -31,7 +32,9 @@ ax_agent_factory/
     job_research_summarize.txt# Stage 0.2 프롬프트 (raw_job_desc + research_sources JSON)
     ivc_task_extractor.txt    # Stage 1-A 프롬프트 (one-shot + JSON 스키마)
     ivc_phase_classifier.txt  # Stage 1-B 프롬프트 (one-shot + JSON 스키마)
-  tests/                      # pytest 단위 테스트 (DB 캐시, IVC 파이프라인, 스텁 동작)
+    workflow_struct.txt       # Stage 3-A 프롬프트 (워크플로우 구조화)
+    workflow_mermaid.txt      # Stage 3-B 프롬프트 (Mermaid 렌더링)
+  tests/                      # pytest 단위 테스트 (DB 캐시, IVC/Workflow 파이프라인, 스텁 동작)
 data/                         # 기본 SQLite 경로(data/ax_factory.db), AX_DB_PATH로 변경 가능
 docs/                         # 문서 세트(PRD, 아키텍처, 로직 플로우, 스키마 등)
 logs/                         # 로그 출력 디렉터리 (logging_config가 생성)
