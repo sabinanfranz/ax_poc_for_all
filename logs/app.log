@@ -958,3 +958,271 @@ sqlite3.OperationalError: database is locked
 [2025-12-03 10:39:36,579] [WARNING] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier validation failed; returning stub
 [2025-12-03 10:39:36,604] [INFO] [ax_agent_factory.core.ivc.static_classifier] Static classifier started for job_title=브랜드 매니저
 [2025-12-03 10:39:38,808] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:43:09,375] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-03 10:43:11,757] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-03 10:43:11,758] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:43:45,894] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:43:45,916] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=7338
+[2025-12-03 10:43:45,938] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_collect status=success latency_ms=36531 tokens_prompt=2227 tokens_completion=4030 tokens_total=12646
+[2025-12-03 10:43:45,946] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-03 10:43:47,835] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-03 10:43:47,835] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:44:17,557] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:44:17,557] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=4637
+[2025-12-03 10:44:17,596] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_summarize status=success latency_ms=31602 tokens_prompt=6171 tokens_completion=2409 tokens_total=13088
+[2025-12-03 10:44:17,628] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-03 10:44:23,602] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-03 10:44:23,604] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:45:14,458] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:45:14,459] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=9326
+[2025-12-03 10:45:14,479] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_task_extractor status=success latency_ms=56832 tokens_prompt=2489 tokens_completion=3449 tokens_total=16234
+[2025-12-03 10:45:14,482] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=40
+[2025-12-03 10:45:14,497] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-03 10:45:16,409] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-03 10:45:16,409] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:46:06,726] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:46:06,728] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=15583
+[2025-12-03 10:46:06,741] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_phase_classifier status=success latency_ms=52231 tokens_prompt=5964 tokens_completion=6228 tokens_total=18748
+[2025-12-03 10:46:06,744] [WARNING] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier validation failed; returning stub
+[2025-12-03 10:46:06,748] [INFO] [ax_agent_factory.core.ivc.static_classifier] Static classifier started for job_title=브랜드 매니저
+[2025-12-03 10:46:07,608] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:48:02,403] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:48:02,437] [INFO] [ax_agent_factory.infra.llm_client] stage1_static_classifier raw response received. length=43226
+[2025-12-03 10:48:02,513] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_static_classifier status=success latency_ms=115707 tokens_prompt=7378 tokens_completion=11579 tokens_total=35962
+[2025-12-03 10:48:02,572] [INFO] [ax_agent_factory.core.workflow] Workflow Struct planner started for job_title=브랜드 매니저
+[2025-12-03 10:48:10,015] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:49:09,759] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:49:09,761] [INFO] [ax_agent_factory.infra.llm_client] stage2_workflow_struct raw response received. length=12312
+[2025-12-03 10:49:09,779] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage2_workflow_struct status=success latency_ms=67179 tokens_prompt=8067 tokens_completion=5566 tokens_total=23573
+[2025-12-03 10:49:09,786] [INFO] [ax_agent_factory.core.workflow] Workflow Struct succeeded. nodes=40 edges=56
+[2025-12-03 10:49:09,805] [INFO] [ax_agent_factory.core.workflow] Workflow Mermaid rendering started for workflow=LG생활건강 브랜드 매니저 핵심 업무 워크플로우
+[2025-12-03 10:49:11,730] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:49:42,457] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:49:42,459] [INFO] [ax_agent_factory.infra.llm_client] stage2_workflow_mermaid raw response received. length=3926
+[2025-12-03 10:49:42,476] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage2_workflow_mermaid status=success latency_ms=32653 tokens_prompt=16964 tokens_completion=1839 tokens_total=23780
+[2025-12-03 10:49:42,480] [INFO] [ax_agent_factory.core.workflow] Workflow Mermaid rendering succeeded. code_length=3595
+[2025-12-03 10:50:14,766] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-03 10:50:17,586] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-03 10:50:17,587] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:50:42,336] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:50:42,347] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=4552
+[2025-12-03 10:50:42,385] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_collect status=success latency_ms=27582 tokens_prompt=2227 tokens_completion=2562 tokens_total=10046
+[2025-12-03 10:50:42,442] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-03 10:50:49,191] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-03 10:50:49,193] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:51:13,392] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:51:13,397] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=3999
+[2025-12-03 10:51:13,447] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_summarize status=success latency_ms=30955 tokens_prompt=4845 tokens_completion=2112 tokens_total=9945
+[2025-12-03 10:51:13,492] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-03 10:51:18,421] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-03 10:51:18,422] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:51:46,007] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:51:46,009] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=4992
+[2025-12-03 10:51:46,026] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_task_extractor status=success latency_ms=32516 tokens_prompt=2315 tokens_completion=1860 tokens_total=9216
+[2025-12-03 10:51:46,029] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=28
+[2025-12-03 10:51:46,046] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-03 10:51:47,959] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-03 10:51:47,960] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 10:52:18,841] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 10:52:18,842] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=8328
+[2025-12-03 10:52:18,856] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_phase_classifier status=success latency_ms=32796 tokens_prompt=4828 tokens_completion=3340 tokens_total=12795
+[2025-12-03 10:52:18,860] [WARNING] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier validation failed; returning stub
+[2025-12-03 11:12:42,173] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG유플러스, job_title=전략기획
+[2025-12-03 11:12:44,064] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-03 11:12:44,065] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 11:13:16,088] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 11:13:16,110] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=6892
+[2025-12-03 11:13:16,147] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_collect status=success latency_ms=33948 tokens_prompt=2223 tokens_completion=3717 tokens_total=12404
+[2025-12-03 11:13:16,166] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=전략기획
+[2025-12-03 11:13:17,637] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-03 11:13:17,638] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 11:13:53,471] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 11:13:53,474] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=5499
+[2025-12-03 11:13:53,501] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_summarize status=success latency_ms=37307 tokens_prompt=5883 tokens_completion=2916 tokens_total=14095
+[2025-12-03 11:13:53,522] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=전략기획, company_name=LG유플러스
+[2025-12-03 11:13:56,144] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-03 11:13:56,145] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 11:14:16,787] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 11:14:16,790] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=1715
+[2025-12-03 11:14:16,811] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_task_extractor status=success latency_ms=23267 tokens_prompt=2355 tokens_completion=841 tokens_total=7136
+[2025-12-03 11:14:16,816] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=0
+[2025-12-03 11:14:16,817] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=전략기획, company_name=LG유플러스
+[2025-12-03 11:14:19,305] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-03 11:14:19,307] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 11:14:21,794] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 11:14:21,797] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=214
+[2025-12-03 11:14:21,822] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_phase_classifier status=success latency_ms=4979 tokens_prompt=3761 tokens_completion=86 tokens_total=4072
+[2025-12-03 11:14:21,830] [INFO] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier parsing succeeded. ivc_task_count=0
+[2025-12-03 11:14:21,831] [INFO] [ax_agent_factory.core.ivc.static_classifier] Static classifier started for job_title=전략기획
+[2025-12-03 11:14:24,283] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 11:14:30,223] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 11:14:30,225] [INFO] [ax_agent_factory.infra.llm_client] stage1_static_classifier raw response received. length=430
+[2025-12-03 11:14:30,246] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_static_classifier status=success latency_ms=8394 tokens_prompt=2433 tokens_completion=160 tokens_total=3767
+[2025-12-03 11:14:30,251] [INFO] [ax_agent_factory.core.workflow] Workflow Struct planner started for job_title=전략기획
+[2025-12-03 11:14:32,543] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 11:15:05,807] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 11:15:05,810] [INFO] [ax_agent_factory.infra.llm_client] stage2_workflow_struct raw response received. length=4160
+[2025-12-03 11:15:05,832] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage2_workflow_struct status=success latency_ms=35558 tokens_prompt=2070 tokens_completion=1786 tokens_total=10135
+[2025-12-03 11:15:05,841] [INFO] [ax_agent_factory.core.workflow] Workflow Struct succeeded. nodes=10 edges=9
+[2025-12-03 11:15:05,857] [INFO] [ax_agent_factory.core.workflow] Workflow Mermaid rendering started for workflow=영업 기회 관리 및 후속 조치 자동화
+[2025-12-03 11:15:07,357] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-03 11:16:12,178] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-03 11:16:12,180] [INFO] [ax_agent_factory.infra.llm_client] stage2_workflow_mermaid raw response received. length=1601
+[2025-12-03 11:16:12,202] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage2_workflow_mermaid status=success latency_ms=66322 tokens_prompt=6979 tokens_completion=683 tokens_total=22845
+[2025-12-03 11:16:12,208] [INFO] [ax_agent_factory.core.workflow] Workflow Mermaid rendering succeeded. code_length=1411
+[2025-12-04 07:30:41,876] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-04 07:30:43,695] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-04 07:30:43,695] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:31:29,121] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:31:29,136] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=7085
+[2025-12-04 07:31:29,158] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_collect status=success latency_ms=47251 tokens_prompt=2227 tokens_completion=3724 tokens_total=15461
+[2025-12-04 07:31:29,179] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-04 07:31:30,727] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-04 07:31:30,727] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:32:04,536] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:32:04,552] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=5274
+[2025-12-04 07:32:04,578] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_summarize status=success latency_ms=35373 tokens_prompt=5862 tokens_completion=2701 tokens_total=13366
+[2025-12-04 07:34:31,884] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-04 07:34:33,394] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-04 07:34:33,395] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:35:22,905] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:35:22,907] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=0
+[2025-12-04 07:35:22,907] [WARNING] [ax_agent_factory.infra.llm_client] Collect JSON parsing failed; returning stub
+[2025-12-04 07:35:22,924] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_collect status=json_parse_error latency_ms=51023 tokens_prompt=2227 tokens_completion=94 tokens_total=12298
+[2025-12-04 07:35:22,942] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-04 07:35:24,788] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-04 07:35:24,789] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:35:39,531] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:35:39,533] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=1148
+[2025-12-04 07:35:39,553] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_summarize status=success latency_ms=16593 tokens_prompt=2563 tokens_completion=584 tokens_total=5226
+[2025-12-04 07:35:39,573] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-04 07:35:41,031] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-04 07:35:41,031] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:36:26,285] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:36:26,286] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=9095
+[2025-12-04 07:36:26,307] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_task_extractor status=success latency_ms=46713 tokens_prompt=1514 tokens_completion=3548 tokens_total=13259
+[2025-12-04 07:36:26,311] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=37
+[2025-12-04 07:36:26,324] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-04 07:36:27,812] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-04 07:36:27,813] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:37:30,154] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:37:30,156] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=23838
+[2025-12-04 07:37:30,176] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_phase_classifier status=success latency_ms=63833 tokens_prompt=5109 tokens_completion=9901 tokens_total=20889
+[2025-12-04 07:37:30,180] [INFO] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier parsing succeeded. ivc_task_count=37
+[2025-12-04 07:45:02,357] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-04 07:45:04,678] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-04 07:45:04,680] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:45:36,420] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:45:36,434] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=5801
+[2025-12-04 07:45:36,452] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_collect status=success latency_ms=34078 tokens_prompt=2227 tokens_completion=3190 tokens_total=11809
+[2025-12-04 07:45:36,467] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-04 07:45:39,163] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-04 07:45:39,163] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:46:22,373] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:46:22,373] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=4621
+[2025-12-04 07:46:22,389] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_summarize status=success latency_ms=45898 tokens_prompt=5399 tokens_completion=2376 tokens_total=15828
+[2025-12-04 07:46:22,408] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-04 07:46:24,583] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-04 07:46:24,583] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:47:37,131] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:47:37,131] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=15253
+[2025-12-04 07:47:37,152] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_task_extractor status=success latency_ms=74723 tokens_prompt=1668 tokens_completion=5980 tokens_total=20413
+[2025-12-04 07:47:37,152] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=64
+[2025-12-04 07:47:37,166] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-04 07:47:37,889] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-04 07:47:37,889] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:49:29,411] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:49:29,414] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=40671
+[2025-12-04 07:49:29,441] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_phase_classifier status=success latency_ms=112254 tokens_prompt=7290 tokens_completion=16724 tokens_total=36922
+[2025-12-04 07:49:29,447] [INFO] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier parsing succeeded. ivc_task_count=64
+[2025-12-04 07:49:29,465] [INFO] [ax_agent_factory.core.ivc.static_classifier] Static classifier started for job_title=브랜드 매니저
+[2025-12-04 07:49:30,954] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 07:52:30,602] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 07:52:30,618] [INFO] [ax_agent_factory.infra.llm_client] stage1_static_classifier raw response received. length=54149
+[2025-12-04 07:52:30,649] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_static_classifier status=success latency_ms=181159 tokens_prompt=16091 tokens_completion=19655 tokens_total=62963
+[2025-12-04 09:00:17,864] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=LG생활건강, job_title=브랜드 매니저
+[2025-12-04 09:00:19,377] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-04 09:00:19,377] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:00:38,505] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:00:38,508] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=2920
+[2025-12-04 09:00:38,520] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_collect status=success latency_ms=20640 tokens_prompt=2227 tokens_completion=1636 tokens_total=8913
+[2025-12-04 09:00:38,532] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-04 09:00:39,295] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-04 09:00:39,295] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:01:01,169] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:01:01,171] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=3527
+[2025-12-04 09:01:01,187] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_summarize status=success latency_ms=22639 tokens_prompt=3985 tokens_completion=1862 tokens_total=8908
+[2025-12-04 09:01:01,210] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-04 09:01:02,927] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-04 09:01:02,927] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:01:45,800] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:01:45,832] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=10615
+[2025-12-04 09:01:45,850] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_task_extractor status=success latency_ms=44623 tokens_prompt=1644 tokens_completion=4165 tokens_total=12462
+[2025-12-04 09:01:45,853] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=43
+[2025-12-04 09:01:45,868] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=LG생활건강
+[2025-12-04 09:01:47,338] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-04 09:01:47,339] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:03:10,299] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:03:10,302] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=27368
+[2025-12-04 09:03:10,334] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_phase_classifier status=success latency_ms=84439 tokens_prompt=5765 tokens_completion=11279 tokens_total=26629
+[2025-12-04 09:03:10,346] [INFO] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier parsing succeeded. ivc_task_count=43
+[2025-12-04 09:03:10,374] [INFO] [ax_agent_factory.core.ivc.static_classifier] Static classifier started for job_title=브랜드 매니저
+[2025-12-04 09:03:13,816] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:05:10,934] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:05:10,934] [INFO] [ax_agent_factory.infra.llm_client] stage1_static_classifier raw response received. length=30217
+[2025-12-04 09:05:10,979] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_static_classifier status=success latency_ms=120574 tokens_prompt=11404 tokens_completion=10973 tokens_total=40699
+[2025-12-04 09:05:11,025] [INFO] [ax_agent_factory.core.workflow] Workflow Struct planner started for job_title=브랜드 매니저
+[2025-12-04 09:05:18,490] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:05:54,991] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:05:54,996] [INFO] [ax_agent_factory.infra.llm_client] stage2_workflow_struct raw response received. length=5490
+[2025-12-04 09:05:55,026] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage2_workflow_struct status=success latency_ms=43970 tokens_prompt=2070 tokens_completion=2419 tokens_total=10288
+[2025-12-04 09:05:55,033] [INFO] [ax_agent_factory.core.workflow] Workflow Struct succeeded. nodes=13 edges=14
+[2025-12-04 09:05:55,062] [INFO] [ax_agent_factory.core.workflow] Workflow Mermaid rendering started for workflow=고객 문의 & 피드백 워크플로우
+[2025-12-04 09:05:58,732] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:06:55,294] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:06:55,296] [INFO] [ax_agent_factory.infra.llm_client] stage2_workflow_mermaid raw response received. length=2455
+[2025-12-04 09:06:55,312] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage2_workflow_mermaid status=success latency_ms=60231 tokens_prompt=8870 tokens_completion=1140 tokens_total=23046
+[2025-12-04 09:06:55,317] [INFO] [ax_agent_factory.core.workflow] Workflow Mermaid rendering succeeded. code_length=1445
+[2025-12-04 09:40:18,325] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_collect started for company=아모레퍼시픽, job_title=브랜드 매니저
+[2025-12-04 09:40:26,108] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_collect model=gemini-2.5-flash
+[2025-12-04 09:40:26,110] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:40:46,930] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:40:46,949] [INFO] [ax_agent_factory.infra.llm_client] Collect raw response received. length=4206
+[2025-12-04 09:40:46,975] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_collect status=success latency_ms=28598 tokens_prompt=2239 tokens_completion=2129 tokens_total=9239
+[2025-12-04 09:40:47,009] [INFO] [ax_agent_factory.infra.llm_client] call_job_research_summarize started for job_title=브랜드 매니저
+[2025-12-04 09:40:52,037] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini job_research_summarize model=gemini-2.5-flash
+[2025-12-04 09:40:52,039] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:41:21,510] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:41:21,530] [INFO] [ax_agent_factory.infra.llm_client] Summarize raw response received. length=4036
+[2025-12-04 09:41:21,609] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage0_summarize status=success latency_ms=34531 tokens_prompt=4335 tokens_completion=1991 tokens_total=10224
+[2025-12-04 09:41:21,712] [INFO] [ax_agent_factory.core.ivc.task_extractor] IVC TaskExtractor started for job_title=브랜드 매니저, company_name=아모레퍼시픽
+[2025-12-04 09:41:32,261] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini task_extractor model=gemini-2.5-flash
+[2025-12-04 09:41:32,268] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:42:33,003] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:42:33,008] [INFO] [ax_agent_factory.infra.llm_client] Task Extractor raw response received. length=13524
+[2025-12-04 09:42:33,044] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_task_extractor status=success latency_ms=71287 tokens_prompt=1732 tokens_completion=5251 tokens_total=17578
+[2025-12-04 09:42:33,054] [INFO] [ax_agent_factory.core.ivc.task_extractor] Task Extractor parsing succeeded. task_count=56
+[2025-12-04 09:42:33,085] [INFO] [ax_agent_factory.core.ivc.phase_classifier] IVC PhaseClassifier started for job_title=브랜드 매니저, company_name=아모레퍼시픽
+[2025-12-04 09:42:37,199] [INFO] [ax_agent_factory.infra.llm_client] Calling Gemini phase_classifier model=gemini-2.5-flash
+[2025-12-04 09:42:37,201] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:44:01,745] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:44:01,747] [INFO] [ax_agent_factory.infra.llm_client] Phase Classifier raw response received. length=34539
+[2025-12-04 09:44:01,768] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_phase_classifier status=success latency_ms=88663 tokens_prompt=6743 tokens_completion=14091 tokens_total=28364
+[2025-12-04 09:44:01,776] [INFO] [ax_agent_factory.core.ivc.phase_classifier] Phase Classifier parsing succeeded. ivc_task_count=56
+[2025-12-04 09:44:01,793] [INFO] [ax_agent_factory.core.ivc.static_classifier] Static classifier started for job_title=브랜드 매니저
+[2025-12-04 09:44:03,338] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:46:30,577] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:46:30,904] [INFO] [ax_agent_factory.infra.llm_client] stage1_static_classifier raw response received. length=36892
+[2025-12-04 09:46:31,494] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage1_static_classifier status=success latency_ms=149548 tokens_prompt=13661 tokens_completion=13441 tokens_total=50647
+[2025-12-04 09:46:31,620] [INFO] [ax_agent_factory.core.workflow] Workflow Struct planner started for job_title=브랜드 매니저
+[2025-12-04 09:46:47,845] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:47:19,962] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:47:19,968] [INFO] [ax_agent_factory.infra.llm_client] stage2_workflow_struct raw response received. length=5584
+[2025-12-04 09:47:20,006] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage2_workflow_struct status=success latency_ms=48343 tokens_prompt=2070 tokens_completion=2351 tokens_total=9815
+[2025-12-04 09:47:20,017] [INFO] [ax_agent_factory.core.workflow] Workflow Struct succeeded. nodes=10 edges=24
+[2025-12-04 09:47:20,049] [INFO] [ax_agent_factory.core.workflow] Workflow Mermaid rendering started for workflow=워크플로우 설계
+[2025-12-04 09:47:26,304] [INFO] [google_genai.models] AFC is enabled with max remote calls: 10.
+[2025-12-04 09:48:30,573] [INFO] [httpx] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+[2025-12-04 09:48:30,579] [INFO] [ax_agent_factory.infra.llm_client] stage2_workflow_mermaid raw response received. length=2074
+[2025-12-04 09:48:30,619] [INFO] [ax_agent_factory.infra.llm_client] LLM call logged stage=stage2_workflow_mermaid status=success latency_ms=70529 tokens_prompt=8597 tokens_completion=869 tokens_total=23428
+[2025-12-04 09:48:30,625] [INFO] [ax_agent_factory.core.workflow] Workflow Mermaid rendering succeeded. code_length=1874

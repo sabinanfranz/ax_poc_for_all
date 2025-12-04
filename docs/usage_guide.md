@@ -1,5 +1,5 @@
 # Usage Guide
-> Last updated: 2025-12-03 (by AX Agent Factory Codex)
+> Last updated: 2025-12-04 (by AX Agent Factory Codex)
 
 ## 1) 환경 준비
 - Python 3.10+ 권장, 가상환경 사용.
@@ -24,9 +24,11 @@ streamlit run ax_agent_factory/app.py
 ```
 - 브라우저가 열리면 사이드바에 회사명/직무명 입력, 필요하면 JD 텍스트를 붙여넣는다.
 - 버튼
-  - `0. Job Research 실행`: Stage 0만 실행, 결과를 DB/세션에 저장.
-  - `0~1단계 실행 (Job Research → IVC)`: Stage 0 실행 후 바로 Stage 1(IVC)까지 수행.
-  - `0~1~2단계 실행 (Job Research → IVC → Workflow)`: Stage 0/1 실행 후 Stage 3 Workflow(2.1 구조화 → 2.2 Mermaid)까지 수행.
+  - `▶ 다음 단계 실행`: 0.2 → 1.2 → 1.3 → 2.2 순으로 단계별 실행.
+  - `0. Job Research만 실행`: 0.1/0.2까지만 실행.
+  - `1. IVC까지 실행`: 0.x → 1.1/1.2까지 실행.
+  - `1.3 Static까지 실행`: 0.x → 1.1/1.2/1.3까지 실행.
+  - `2. Workflow까지 실행`: 전체(0~2.2) 실행.
 - 로그: `logs/app.log`가 자동 생성되며, UI 하단 expander에서 tail 확인 가능.
 
 ## 3) 결과 확인 (탭 안내)
@@ -34,10 +36,11 @@ streamlit run ax_agent_factory/app.py
   - 0.1: `raw_sources` + LLM raw/cleaned/error
   - 0.2: `raw_job_desc`, `research_sources` + LLM raw/cleaned/error
 - **Stage 1 탭**
-  - 1-A Task Extractor: `task_atoms[]` + LLM raw/cleaned/error
-  - 1-B Phase Classifier: `ivc_tasks[]`, `phase_summary`, `task_atoms` + LLM raw/cleaned/error
-- **Stage 2.x 탭 (실제 Stage 3 Workflow)**
-  - 2.1 Workflow Struct: `workflow_name`, `stages`, `streams`, `nodes`, `edges`, entry/exit 포인트 + LLM raw/cleaned/error
+  - 1.1 Task Extractor: `task_atoms[]` + LLM raw/cleaned/error
+  - 1.2 Phase Classifier: `ivc_tasks[]`, `phase_summary`, `task_atoms` + LLM raw/cleaned/error
+  - 1.3 Static Classifier: `task_static_meta`, `static_summary` + LLM raw/cleaned/error
+- **Stage 2 탭**
+  - 2.1 Workflow Struct: `workflow_name`, `stages`, `streams`, `nodes`, `edges`, entry/exit/hub + LLM raw/cleaned/error
   - 2.2 Workflow Mermaid: `mermaid_code`(노션 호환), `warnings` + LLM raw/cleaned/error
 - LLM 키/SDK가 없으면 Stage 0/1 모두 스텁으로 동작하며, `llm_error`에 사유가 남습니다.
 

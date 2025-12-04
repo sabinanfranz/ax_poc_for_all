@@ -30,7 +30,7 @@ class IVCPhaseClassifier:
         template = load_prompt("ivc_phase_classifier")
         return template.replace("{input_json}", json.dumps(input_json, ensure_ascii=False))
 
-    def run(self, task_list_input: IVCTaskListInput) -> PhaseClassificationResult:
+    def run(self, task_list_input: IVCTaskListInput, *, job_run_id: Optional[int] = None) -> PhaseClassificationResult:
         """프롬프트 생성 → LLM 호출 → 파싱."""
         logger.info(
             "IVC PhaseClassifier started for job_title=%s, company_name=%s",
@@ -40,6 +40,7 @@ class IVCPhaseClassifier:
         try:
             llm_output = call_phase_classifier(
                 task_list_input.model_dump(),
+                job_run_id=job_run_id,
                 llm_client_override=self.llm,
             )
             result = parse_phase_classification_dict(llm_output)

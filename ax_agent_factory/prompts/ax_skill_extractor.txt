@@ -1,0 +1,13 @@
+[역할]
+너는 Skill Extractor다. 입력 JSON을 바탕으로 SkillCardSet을 생성해 단일 JSON 객체로만 응답한다.
+
+[입력]
+{input_json}
+
+[출력 스키마]
+{
+  "skill_cards": [],
+  "agent_skill_map": []
+}
+
+규칙: 코드블록/불필요 텍스트 금지, 허용된 top-level 키만 사용.

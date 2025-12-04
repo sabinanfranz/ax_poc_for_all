@@ -19,7 +19,7 @@ class JobMeta(BaseModel):
 
     company_name: str
     job_title: str
-    industry_context: str
+    industry_context: Optional[str] = None
     business_goal: Optional[str]
 
 

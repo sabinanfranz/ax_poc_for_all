@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+import html
+import json
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 # Ensure project root is on sys.path when launched via streamlit
 ROOT = Path(__file__).resolve().parent.parent
@@ -13,8 +16,10 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 from ax_agent_factory.core.pipeline_manager import PipelineManager
+from ax_agent_factory.core import stage_runner_ax
 from ax_agent_factory.models.stages import PIPELINE_STAGES
 from ax_agent_factory.infra import db
+from ax_agent_factory.infra import ax_workflow_repo, ax_agent_repo, ax_skill_repo
 from ax_agent_factory.infra.logging_config import setup_logging
 
 
@@ -39,6 +44,13 @@ def main() -> None:
         run_stage13 = st.button("1.3 Static까지 실행")
         run_stage2 = st.button("2. Workflow까지 실행")
         run_next = st.button("▶ 다음 단계 실행")
+        st.markdown("---")
+        run_stage4 = st.button("4. AX Workflow 실행")
+        run_stage5 = st.button("5. Agent Architect 실행")
+        run_stage6 = st.button("6. Deep Skill Research 실행")
+        run_stage7 = st.button("7. Skill Extractor 실행")
+        run_stage8 = st.button("8. Prompt Builder 실행")
+        run_ax_all = st.button("AX 전체 실행 (4→8)")
 
     if "pipeline" not in st.session_state:
         st.session_state.pipeline = PipelineManager()
@@ -53,6 +65,11 @@ def main() -> None:
     stage1_static_result = st.session_state.get("stage1_static_result")
     workflow_plan = st.session_state.get("workflow_plan")
     workflow_mermaid = st.session_state.get("workflow_mermaid")
+    stage4_ax_workflow = st.session_state.get("stage4_ax_workflow")
+    stage5_agent_specs = st.session_state.get("stage5_agent_specs")
+    stage6_deep_research = st.session_state.get("stage6_deep_research")
+    stage7_skill_cards = st.session_state.get("stage7_skill_cards")
+    stage8_agent_prompts = st.session_state.get("stage8_agent_prompts")
     last_completed_label = st.session_state.get("last_completed_ui_label")
 
     def _store_results(results: dict, target_label: str) -> None:
@@ -70,6 +87,16 @@ def main() -> None:
             st.session_state.workflow_plan = results["stage2_plan"]
         if "stage2_mermaid" in results:
             st.session_state.workflow_mermaid = results["stage2_mermaid"]
+        if "stage4_ax_workflow" in results:
+            st.session_state.stage4_ax_workflow = results["stage4_ax_workflow"]
+        if "stage5_agent_specs" in results:
+            st.session_state.stage5_agent_specs = results["stage5_agent_specs"]
+        if "stage6_deep_research" in results:
+            st.session_state.stage6_deep_research = results["stage6_deep_research"]
+        if "stage7_skill_cards" in results:
+            st.session_state.stage7_skill_cards = results["stage7_skill_cards"]
+        if "stage8_agent_prompts" in results:
+            st.session_state.stage8_agent_prompts = results["stage8_agent_prompts"]
         st.session_state.last_completed_ui_label = target_label
 
     def _run_until(target_label: str) -> None:
@@ -130,6 +157,131 @@ def main() -> None:
         target = PipelineManager.get_next_label(last_completed_label)
         _run_until(target)
 
+    def _ensure_job_run():
+        nonlocal job_run
+        if job_run is None:
+            job_run = pipeline.create_or_get_job_run(
+                company_name or "Unknown", job_title or "Unknown", manual_jd_text=manual_jd_text or None
+            )
+            st.session_state.job_run = job_run
+        return job_run
+
+    # AX stage triggers
+    if run_stage4:
+        jr = _ensure_job_run()
+        if jr and workflow_mermaid is None:
+            st.warning("Workflow Mermaid 결과가 필요합니다. 먼저 2.2를 실행하세요.")
+        else:
+            with st.spinner("Stage 4 AX Workflow 실행 중..."):
+                result = stage_runner_ax.run_stage4_ax_workflow(
+                    jr.id, workflow_mermaid.mermaid_code if workflow_mermaid else ""
+                )
+                st.session_state.stage4_ax_workflow = result
+                st.success("Stage 4 완료")
+
+    if run_stage5:
+        jr = _ensure_job_run()
+        with st.spinner("Stage 5 Agent Architect 실행 중..."):
+            result = stage_runner_ax.run_stage5_agent_architect(jr.id)
+            st.session_state.stage5_agent_specs = result
+            st.success("Stage 5 완료")
+
+    if run_stage6:
+        jr = _ensure_job_run()
+        agents_rows = ax_agent_repo.get_agents(jr.id)
+        agents_lite = [
+            stage_runner_ax.AgentSpecLite(
+                agent_id=a["agent_id"],
+                agent_name=a["agent_name"],
+                role_and_goal=a.get("role_and_goal") or "",
+                agent_type=a.get("agent_type") or "",
+                execution_environment=a.get("execution_environment") or "",
+            )
+            for a in agents_rows
+        ]
+        with st.spinner("Stage 6 Deep Skill Research 실행 중..."):
+            result = stage_runner_ax.run_stage6_deep_skill_research(jr.id, agents=agents_lite or None)
+            st.session_state.stage6_deep_research = result
+            st.success("Stage 6 완료")
+
+    if run_stage7:
+        jr = _ensure_job_run()
+        agents_rows = ax_agent_repo.get_agents(jr.id)
+        agents_lite = [
+            stage_runner_ax.AgentSpecLite(
+                agent_id=a["agent_id"],
+                agent_name=a["agent_name"],
+                role_and_goal=a.get("role_and_goal") or "",
+                agent_type=a.get("agent_type") or "",
+                execution_environment=a.get("execution_environment") or "",
+            )
+            for a in agents_rows
+        ]
+        deep_rows = ax_skill_repo.get_deep_research_results(jr.id)
+        deep_models = [
+            stage_runner_ax.DeepSkillResearchResult(
+                agent_id=row["agent_id"],
+                research_focus=row.get("research_focus") or "skill",
+                sections=json.loads(row["sections_json"]) if row.get("sections_json") else {},
+            )
+            for row in deep_rows
+        ]
+        with st.spinner("Stage 7 Skill Extractor 실행 중..."):
+            result = stage_runner_ax.run_stage7_skill_extractor(
+                jr.id,
+                agents=agents_lite or None,
+                deep_research_results=deep_models or None,
+            )
+            st.session_state.stage7_skill_cards = result
+            st.success("Stage 7 완료")
+
+    if run_stage8:
+        jr = _ensure_job_run()
+        with st.spinner("Stage 8 Prompt Builder 실행 중..."):
+            result = stage_runner_ax.run_stage8_prompt_builder(jr.id)
+            st.session_state.stage8_agent_prompts = result
+            st.success("Stage 8 완료")
+
+    if run_ax_all:
+        jr = _ensure_job_run()
+        if workflow_mermaid is None:
+            st.warning("Workflow Mermaid 결과가 필요합니다. 2.2 실행 후 다시 시도하세요.")
+        else:
+            with st.spinner("AX 전체 실행 중 (4→8)..."):
+                stage4 = stage_runner_ax.run_stage4_ax_workflow(jr.id, workflow_mermaid.mermaid_code)
+                st.session_state.stage4_ax_workflow = stage4
+                stage5 = stage_runner_ax.run_stage5_agent_architect(jr.id)
+                st.session_state.stage5_agent_specs = stage5
+                agents_rows = ax_agent_repo.get_agents(jr.id)
+                agents_lite = [
+                    stage_runner_ax.AgentSpecLite(
+                        agent_id=a["agent_id"],
+                        agent_name=a["agent_name"],
+                        role_and_goal=a.get("role_and_goal") or "",
+                        agent_type=a.get("agent_type") or "",
+                        execution_environment=a.get("execution_environment") or "",
+                    )
+                    for a in agents_rows
+                ]
+                stage6 = stage_runner_ax.run_stage6_deep_skill_research(jr.id, agents=agents_lite or None)
+                st.session_state.stage6_deep_research = stage6
+                deep_rows = ax_skill_repo.get_deep_research_results(jr.id)
+                deep_models = [
+                    stage_runner_ax.DeepSkillResearchResult(
+                        agent_id=row["agent_id"],
+                        research_focus=row.get("research_focus") or "skill",
+                        sections=json.loads(row["sections_json"]) if row.get("sections_json") else {},
+                    )
+                    for row in deep_rows
+                ]
+                stage7 = stage_runner_ax.run_stage7_skill_extractor(
+                    jr.id, agents=agents_lite or None, deep_research_results=deep_models or None
+                )
+                st.session_state.stage7_skill_cards = stage7
+                stage8 = stage_runner_ax.run_stage8_prompt_builder(jr.id)
+                st.session_state.stage8_agent_prompts = stage8
+                st.success("AX 전체 실행 완료")
+
     implemented_stages = [s for s in PIPELINE_STAGES if s.implemented]
     stage_map = {s.id: s for s in implemented_stages}
     tab_defs: list[tuple[str, str]] = [(s.tab_title, s.id) for s in implemented_stages]
@@ -176,6 +328,29 @@ def main() -> None:
                 render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid)
             else:
                 st.info("이 Stage의 로직은 아직 구현되지 않았습니다.")
+
+    st.markdown("---")
+    st.subheader("AX Stages (4~8)")
+    ax_tabs = st.tabs(
+        [
+            "4. AX Workflow",
+            "5. Agent Architect",
+            "6. Deep Skill Research",
+            "7. Skill Extractor",
+            "8. Prompt Builder",
+        ]
+    )
+    ax_workflow_row = ax_workflow_repo.get_latest_ax_workflow(job_run.id) if job_run else None
+    with ax_tabs[0]:
+        render_stage4_ax_tabs(job_run, workflow_mermaid, stage4_ax_workflow)
+    with ax_tabs[1]:
+        render_stage5_agent_tabs(ax_workflow_row, stage5_agent_specs)
+    with ax_tabs[2]:
+        render_stage6_deep_tabs(stage6_deep_research or [])
+    with ax_tabs[3]:
+        render_stage7_skill_tabs(stage7_skill_cards)
+    with ax_tabs[4]:
+        render_stage8_prompt_tabs(stage8_agent_prompts)
 
     render_log_expander()
 
@@ -334,6 +509,9 @@ def render_stage0_summarize_tabs(job_run, job_research_result, manual_jd_text: s
 
 def render_stage1_task_extractor_tabs(job_run, job_research_result, task_result, manual_jd_text: str | None = None) -> None:
     """Render Task Extractor with Stage 0-style flat sub tabs."""
+    # DB fallback if session is empty
+    if job_research_result is None and job_run is not None:
+        job_research_result = db.get_job_research_result(job_run.id)
     tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
 
     with tabs[0]:
@@ -424,29 +602,42 @@ def render_stage1_task_extractor_tabs(job_run, job_research_result, task_result,
 
 def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result, manual_jd_text: str | None = None) -> None:
     """Render Phase Classifier with Stage 0-style flat sub tabs."""
+    if ivc_result is None and job_run is not None:
+        # Try DB fallback: load tasks and show minimal view
+        tasks = db.get_job_tasks(job_run.id)
+    else:
+        tasks = None
     tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
 
     with tabs[0]:
-        if ivc_result is None:
+        if ivc_result is None and not tasks:
             st.warning("Phase Classifier 입력이 없습니다. Stage 1-A 결과가 필요합니다.")
         else:
+            task_atoms = (
+                [t.dict() if hasattr(t, "dict") else t for t in (ivc_result.task_atoms or [])]
+                if ivc_result
+                else tasks
+            )
             st.json(
                 {
-                    "job_meta": ivc_result.job_meta.dict() if hasattr(ivc_result, "job_meta") else None,
-                    "task_atoms": [t.dict() if hasattr(t, "dict") else t for t in (ivc_result.task_atoms or [])],
+                    "job_meta": ivc_result.job_meta.dict() if ivc_result and hasattr(ivc_result, "job_meta") else None,
+                    "task_atoms": task_atoms,
                     "manual_jd_text": manual_jd_text or None,
                 }
             )
 
     # 결과
     with tabs[1]:
-        if ivc_result is None:
+        if ivc_result is None and not tasks:
             st.warning("아직 IVC 결과가 없습니다. 사이드바에서 0~1단계 실행을 눌러주세요.")
         else:
             st.subheader("ivc_tasks")
-            st.json([t.dict() if hasattr(t, "dict") else t for t in ivc_result.ivc_tasks])
-            st.subheader("phase_summary")
-            st.json(ivc_result.phase_summary.dict())
+            if ivc_result:
+                st.json([t.dict() if hasattr(t, "dict") else t for t in ivc_result.ivc_tasks])
+                st.subheader("phase_summary")
+                st.json(ivc_result.phase_summary.dict())
+            else:
+                st.info("DB에 저장된 task_atoms만 표시합니다 (ivc_tasks 없음).")
 
     # LLM 원문
     with tabs[2]:
@@ -510,13 +701,14 @@ def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result
 
 def render_stage1_static_classifier_tabs(job_run, phase_result, static_result) -> None:
     """Render Static Task Classifier tabs."""
+    tasks = db.get_job_tasks(job_run.id) if job_run is not None else None
     tabs = st.tabs(["Input", "결과", "LLM Raw", "LLM Cleaned JSON", "Error", "설명", "I/O"])
 
     with tabs[0]:
-        if phase_result is None:
+        if phase_result is None and not tasks:
             st.warning("Phase Classifier 결과가 없습니다.")
         else:
-            st.json(phase_result.dict())
+            st.json(phase_result.dict() if phase_result else {"job_tasks": tasks})
 
     with tabs[1]:
         if static_result is None:
@@ -594,10 +786,12 @@ def render_stage1_static_classifier_tabs(job_run, phase_result, static_result) -
 
 def render_stage2_workflow_struct_tabs(job_run, phase_result, workflow_plan) -> None:
     """Render Workflow Struct (2.1) tabs."""
+    tasks = db.get_job_tasks(job_run.id) if job_run is not None else None
+    edges = db.get_job_task_edges(job_run.id) if job_run is not None else None
     tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
 
     with tabs[0]:
-        if job_run is None or phase_result is None:
+        if job_run is None or (phase_result is None and not tasks):
             st.warning("Workflow Struct 입력이 없습니다. Stage 1 결과가 필요합니다.")
         else:
             st.json(
@@ -606,26 +800,33 @@ def render_stage2_workflow_struct_tabs(job_run, phase_result, workflow_plan) -> 
                         "company_name": job_run.company_name,
                         "job_title": job_run.job_title,
                     },
-                    "ivc_tasks": [t.dict() if hasattr(t, "dict") else t for t in (phase_result.ivc_tasks or [])],
-                    "task_atoms": [t.dict() if hasattr(t, "dict") else t for t in (phase_result.task_atoms or [])],
-                    "phase_summary": phase_result.phase_summary.dict() if hasattr(phase_result, "phase_summary") else None,
+                    "ivc_tasks": [t.dict() if hasattr(t, "dict") else t for t in (phase_result.ivc_tasks or [])] if phase_result else None,
+                    "task_atoms": [t.dict() if hasattr(t, "dict") else t for t in (phase_result.task_atoms or [])] if phase_result else tasks,
+                    "phase_summary": phase_result.phase_summary.dict() if phase_result and hasattr(phase_result, "phase_summary") else None,
                 }
             )
 
     with tabs[1]:
-        if workflow_plan is None:
+        if workflow_plan is None and not tasks:
             st.warning("아직 Workflow Struct 결과가 없습니다. 0~1~2 실행을 눌러주세요.")
         else:
-            st.subheader("workflow_name")
-            st.write(workflow_plan.workflow_name)
-            st.subheader("stages")
-            st.json([s.dict() for s in workflow_plan.stages])
-            st.subheader("streams")
-            st.json([s.dict() for s in workflow_plan.streams])
-            st.subheader("nodes")
-            st.json([n.dict() for n in workflow_plan.nodes])
-            st.subheader("edges")
-            st.json([e.dict() for e in workflow_plan.edges])
+            if workflow_plan:
+                st.subheader("workflow_name")
+                st.write(workflow_plan.workflow_name)
+                st.subheader("stages")
+                st.json([s.dict() for s in workflow_plan.stages])
+                st.subheader("streams")
+                st.json([s.dict() for s in workflow_plan.streams])
+                st.subheader("nodes")
+                st.json([n.dict() for n in workflow_plan.nodes])
+                st.subheader("edges")
+                st.json([e.dict() for e in workflow_plan.edges])
+            if tasks:
+                st.subheader("job_tasks (DB)")
+                st.json(tasks)
+            if edges:
+                st.subheader("job_task_edges (DB)")
+                st.json(edges)
 
     with tabs[2]:
         llm_raw = getattr(workflow_plan, "llm_raw_text", None) if workflow_plan else None
@@ -679,7 +880,7 @@ def render_stage2_workflow_struct_tabs(job_run, phase_result, workflow_plan) -> 
 
 def render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid) -> None:
     """Render Workflow Mermaid (2.2) tabs."""
-    tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
+    tabs = st.tabs(["Input", "결과", "Mermaid 미리보기", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
 
     with tabs[0]:
         if workflow_plan is None:
@@ -698,6 +899,13 @@ def render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid
                 st.json(workflow_mermaid.warnings)
 
     with tabs[2]:
+        if workflow_mermaid is None:
+            st.warning("아직 Workflow Mermaid 결과가 없습니다.")
+        else:
+            st.subheader("Mermaid 렌더링")
+            render_mermaid_chart(workflow_mermaid.mermaid_code)
+
+    with tabs[3]:
         llm_raw = getattr(workflow_mermaid, "llm_raw_text", None) if workflow_mermaid else None
         if llm_raw:
             st.text_area("LLM raw response", value=llm_raw, height=300, key="stage2_mermaid_llm_raw")
@@ -706,7 +914,7 @@ def render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid
         else:
             st.info("아직 Workflow Mermaid 결과가 없습니다.")
 
-    with tabs[3]:
+    with tabs[4]:
         cleaned = getattr(workflow_mermaid, "llm_cleaned_json", None) if workflow_mermaid else None
         if cleaned:
             st.text_area("정규화된 JSON 문자열", value=cleaned, height=300, key="stage2_mermaid_llm_cleaned")
@@ -715,7 +923,7 @@ def render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid
         else:
             st.info("아직 Workflow Mermaid 결과가 없습니다.")
 
-    with tabs[4]:
+    with tabs[5]:
         llm_error = getattr(workflow_mermaid, "llm_error", None) if workflow_mermaid else None
         if llm_error:
             st.error(f"LLM error: {llm_error}")
@@ -724,7 +932,7 @@ def render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid
         else:
             st.info("아직 Workflow Mermaid 결과가 없습니다.")
 
-    with tabs[5]:
+    with tabs[6]:
         st.markdown(
             """
             **Stage 2.2 Mermaid Render 흐름**
@@ -734,7 +942,7 @@ def render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid
             """
         )
 
-    with tabs[6]:
+    with tabs[7]:
         st.markdown(
             """
             **입력**
@@ -745,6 +953,169 @@ def render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid
             - 디버그: llm_raw_text, llm_cleaned_json, llm_error
             """
         )
+
+
+def render_stage4_ax_tabs(job_run, workflow_mermaid, ax_result) -> None:
+    tabs = st.tabs(["Input", "결과", "LLM 원문", "LLM 파싱", "에러", "설명"])
+    with tabs[0]:
+        if job_run is None:
+            st.warning("JobRun이 없습니다.")
+        else:
+            st.json(
+                {
+                    "job_meta": {
+                        "company_name": job_run.company_name,
+                        "job_title": job_run.job_title,
+                        "industry_context": job_run.industry_context,
+                        "business_goal": job_run.business_goal,
+                    },
+                    "workflow_mermaid_code": getattr(workflow_mermaid, "mermaid_code", None),
+                }
+            )
+    with tabs[1]:
+        if ax_result is None:
+            st.info("Stage 4 결과가 없습니다.")
+        else:
+            st.subheader("AX Workflow")
+            st.json(ax_result.model_dump() if hasattr(ax_result, "model_dump") else ax_result)
+    with tabs[2]:
+        raw = getattr(ax_result, "llm_raw_text", None) if ax_result else None
+        st.text_area("LLM raw", value=raw or "", height=260)
+    with tabs[3]:
+        cleaned = getattr(ax_result, "llm_cleaned_json", None) if ax_result else None
+        st.text_area("LLM cleaned JSON", value=cleaned or "", height=260)
+    with tabs[4]:
+        err = getattr(ax_result, "llm_error", None) if ax_result else None
+        st.text(err or "LLM 에러 없음")
+    with tabs[5]:
+        st.markdown(
+            """
+            - 입력: job_meta + workflow mermaid + task_cards(DB job_tasks)
+            - 출력: AXWorkflowResult (ax_workflows/ax_agents 저장)
+            """
+        )
+
+
+def render_stage5_agent_tabs(ax_workflow_row, agent_specs) -> None:
+    tabs = st.tabs(["Input", "결과", "LLM 원문", "LLM 파싱", "에러", "설명"])
+    with tabs[0]:
+        st.json({"agent_table": ax_workflow_row.get("agent_table") if ax_workflow_row else []})
+    with tabs[1]:
+        if agent_specs is None:
+            st.info("Stage 5 결과가 없습니다.")
+        else:
+            st.json(agent_specs)
+    with tabs[2]:
+        raw = agent_specs.get("llm_raw_text") if isinstance(agent_specs, dict) else None
+        st.text_area("LLM raw", value=raw or "", height=260)
+    with tabs[3]:
+        cleaned = agent_specs.get("llm_cleaned_json") if isinstance(agent_specs, dict) else None
+        st.text_area("LLM cleaned JSON", value=cleaned or "", height=260)
+    with tabs[4]:
+        err = agent_specs.get("llm_error") if isinstance(agent_specs, dict) else None
+        st.text(err or "LLM 에러 없음")
+    with tabs[5]:
+        st.markdown(
+            """
+            - 입력: ax_workflows.agent_table_json
+            - 출력: AgentSpecs (ax_agents에 반영)
+            """
+        )
+
+
+def render_stage6_deep_tabs(deep_results) -> None:
+    tabs = st.tabs(["결과", "LLM 원문", "LLM 파싱", "에러", "설명"])
+    with tabs[0]:
+        if not deep_results:
+            st.info("Stage 6 결과가 없습니다.")
+        else:
+            st.json([r.model_dump() if hasattr(r, "model_dump") else r for r in deep_results])
+    with tabs[1]:
+        raw = deep_results[0].llm_raw_text if deep_results and hasattr(deep_results[0], "llm_raw_text") else None
+        st.text_area("LLM raw", value=raw or "", height=260)
+    with tabs[2]:
+        cleaned = deep_results[0].llm_cleaned_json if deep_results and hasattr(deep_results[0], "llm_cleaned_json") else None
+        st.text_area("LLM cleaned JSON", value=cleaned or "", height=260)
+    with tabs[3]:
+        err = deep_results[0].llm_error if deep_results and hasattr(deep_results[0], "llm_error") else None
+        st.text(err or "LLM 에러 없음")
+    with tabs[4]:
+        st.markdown(
+            """
+            - 입력: job_meta + agent + task_cards
+            - 출력: DeepSkillResearchResult (ax_deep_research_docs 저장)
+            """
+        )
+
+
+def render_stage7_skill_tabs(skill_result) -> None:
+    tabs = st.tabs(["결과", "LLM 원문", "LLM 파싱", "에러", "설명"])
+    with tabs[0]:
+        if skill_result is None:
+            st.info("Stage 7 결과가 없습니다.")
+        else:
+            st.json(skill_result.model_dump() if hasattr(skill_result, "model_dump") else skill_result)
+    with tabs[1]:
+        raw = getattr(skill_result, "llm_raw_text", None) if skill_result else None
+        st.text_area("LLM raw", value=raw or "", height=260)
+    with tabs[2]:
+        cleaned = getattr(skill_result, "llm_cleaned_json", None) if skill_result else None
+        st.text_area("LLM cleaned JSON", value=cleaned or "", height=260)
+    with tabs[3]:
+        err = getattr(skill_result, "llm_error", None) if skill_result else None
+        st.text(err or "LLM 에러 없음")
+    with tabs[4]:
+        st.markdown(
+            """
+            - 입력: job_meta + agents + agent_tasks + deep_research_results
+            - 출력: SkillCardSet (ax_skills 저장)
+            """
+        )
+
+
+def render_stage8_prompt_tabs(prompt_result) -> None:
+    tabs = st.tabs(["결과", "LLM 원문", "LLM 파싱", "에러", "설명"])
+    with tabs[0]:
+        if prompt_result is None:
+            st.info("Stage 8 결과가 없습니다.")
+        else:
+            st.json(prompt_result.model_dump() if hasattr(prompt_result, "model_dump") else prompt_result)
+    with tabs[1]:
+        raw = getattr(prompt_result, "llm_raw_text", None) if prompt_result else None
+        st.text_area("LLM raw", value=raw or "", height=260)
+    with tabs[2]:
+        cleaned = getattr(prompt_result, "llm_cleaned_json", None) if prompt_result else None
+        st.text_area("LLM cleaned JSON", value=cleaned or "", height=260)
+    with tabs[3]:
+        err = getattr(prompt_result, "llm_error", None) if prompt_result else None
+        st.text(err or "LLM 에러 없음")
+    with tabs[4]:
+        st.markdown(
+            """
+            - 입력: job_meta + agent_specs + skill_cards (+global_policies)
+            - 출력: AgentPromptSet (ax_prompts 저장)
+            """
+        )
+def render_mermaid_chart(mermaid_code: str, height: int = 600) -> None:
+    """Embed Mermaid code as a rendered chart using a lightweight client-side script."""
+    escaped = html.escape(mermaid_code)
+    html_content = f"""
+    <html>
+      <head>
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+      </head>
+      <body>
+        <div class="mermaid">
+        {escaped}
+        </div>
+        <script>
+          mermaid.initialize({{ startOnLoad: true }});
+        </script>
+      </body>
+    </html>
+    """
+    components.html(html_content, height=height, scrolling=True)
+
 
 def render_log_expander() -> None:
     """Show tail of logs/app.log for quick debugging."""

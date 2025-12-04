@@ -10,6 +10,16 @@ import time
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+from ax_agent_factory.core.schemas.ax import (
+    AXWorkflowResult,
+    AgentArchitectResult,
+    AgentPromptSet,
+    DeepSkillResearchInput,
+    DeepSkillResearchResult,
+    JobAXInputPack,
+    PromptBuilderInput,
+    SkillCardSet,
+)
 from ax_agent_factory.infra.prompts import load_prompt
 from ax_agent_factory.infra import db
 from ax_agent_factory.models.llm_log import LLMCallLog
@@ -944,6 +954,134 @@ def call_workflow_mermaid(
     )
 
 
+# ---------------- AX Stage 4~8 ----------------
+
+
+def call_ax_workflow_architect(
+    input_pack: JobAXInputPack,
+    *,
+    max_tokens: int = 81920,
+    model: str | None = None,
+    job_run_id: Optional[int] = None,
+    stage_name: str = "stage4_ax_workflow",
+    prompt_version: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Stage 4: AX Workflow Architect prompt call."""
+    prompt_template = _load_prompt("ax_workflow_architect")
+    prompt = prompt_template.replace("{input_json}", input_pack.model_dump_json(ensure_ascii=False))
+    return _generic_llm_json_call(
+        prompt=prompt,
+        model=model,
+        max_tokens=max_tokens,
+        job_run_id=job_run_id,
+        stage_name=stage_name,
+        prompt_version=prompt_version,
+        llm_client_override=None,
+        sanitizer=_sanitize_workflow_text,
+        stub_factory=lambda **extra: _stub_ax_workflow(input_pack, **extra),
+    )
+
+
+def call_agent_architect(
+    payload: Dict[str, Any],
+    *,
+    max_tokens: int = 81920,
+    model: str | None = None,
+    job_run_id: Optional[int] = None,
+    stage_name: str = "stage5_agent_architect",
+    prompt_version: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Stage 5: Agent Architect prompt call."""
+    prompt_template = _load_prompt("ax_agent_architect")
+    prompt = prompt_template.replace("{input_json}", json.dumps(payload, ensure_ascii=False))
+    return _generic_llm_json_call(
+        prompt=prompt,
+        model=model,
+        max_tokens=max_tokens,
+        job_run_id=job_run_id,
+        stage_name=stage_name,
+        prompt_version=prompt_version,
+        llm_client_override=None,
+        sanitizer=_sanitize_workflow_text,
+        stub_factory=lambda **extra: _stub_agent_architect(payload, **extra),
+    )
+
+
+def call_deep_skill_research(
+    payload: DeepSkillResearchInput,
+    *,
+    max_tokens: int = 81920,
+    model: str | None = None,
+    job_run_id: Optional[int] = None,
+    stage_name: str = "stage6_deep_skill_research",
+    prompt_version: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Stage 6: Deep Skill Research per agent."""
+    prompt_template = _load_prompt("ax_deep_skill_research")
+    prompt = prompt_template.replace("{input_json}", payload.model_dump_json(ensure_ascii=False))
+    return _generic_llm_json_call(
+        prompt=prompt,
+        model=model,
+        max_tokens=max_tokens,
+        job_run_id=job_run_id,
+        stage_name=stage_name,
+        prompt_version=prompt_version,
+        llm_client_override=None,
+        sanitizer=_sanitize_workflow_text,
+        stub_factory=lambda **extra: _stub_deep_skill_research(payload, **extra),
+    )
+
+
+def call_skill_extractor(
+    payload: Dict[str, Any],
+    *,
+    max_tokens: int = 81920,
+    model: str | None = None,
+    job_run_id: Optional[int] = None,
+    stage_name: str = "stage7_skill_extractor",
+    prompt_version: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Stage 7: Skill extractor."""
+    prompt_template = _load_prompt("ax_skill_extractor")
+    prompt = prompt_template.replace("{input_json}", json.dumps(payload, ensure_ascii=False))
+    return _generic_llm_json_call(
+        prompt=prompt,
+        model=model,
+        max_tokens=max_tokens,
+        job_run_id=job_run_id,
+        stage_name=stage_name,
+        prompt_version=prompt_version,
+        llm_client_override=None,
+        sanitizer=_sanitize_workflow_text,
+        stub_factory=lambda **extra: _stub_skill_extractor(payload, **extra),
+    )
+
+
+def call_prompt_builder(
+    payload: PromptBuilderInput,
+    *,
+    max_tokens: int = 81920,
+    model: str | None = None,
+    job_run_id: Optional[int] = None,
+    stage_name: str = "stage8_prompt_builder",
+    prompt_version: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Stage 8: Prompt builder for agents."""
+    prompt_template = _load_prompt("ax_prompt_builder")
+    prompt = prompt_template.replace("{input_json}", payload.model_dump_json(ensure_ascii=False))
+    return _generic_llm_json_call(
+        prompt=prompt,
+        model=model,
+        max_tokens=max_tokens,
+        job_run_id=job_run_id,
+        stage_name=stage_name,
+        prompt_version=prompt_version,
+        llm_client_override=None,
+        sanitizer=_sanitize_workflow_text,
+        stub_factory=lambda **extra: _stub_prompt_builder(payload, **extra),
+    )
+
+
 def _stub_job_research(company_name: str, job_title: str, **extra: Any) -> Dict[str, Any]:
     """Return stubbed Job Research output when LLM is unavailable or parsing fails."""
     stub = {
@@ -968,7 +1106,17 @@ def _stub_job_research(company_name: str, job_title: str, **extra: Any) -> Dict[
 
 def _stub_job_research_collect(company_name: str, job_title: str, **extra: Any) -> Dict[str, Any]:
     """Stub for Stage 0.1 collect."""
+    job_meta = extra.get(
+        "job_meta",
+        {
+            "company_name": company_name,
+            "job_title": job_title,
+            "industry_context": None,
+            "business_goal": None,
+        },
+    )
     stub = {
+        "job_meta": job_meta,
         "raw_sources": [
             {
                 "url": "https://example.com/jd",
@@ -1155,6 +1303,62 @@ def _stub_workflow_mermaid(workflow_plan: Dict[str, Any], **extra: Any) -> Dict[
         stub.update(extra)
     if "_raw_text" not in stub and "raw_text" in stub:
         stub["_raw_text"] = stub["raw_text"]
+    return stub
+
+
+def _stub_ax_workflow(input_pack: JobAXInputPack, **extra: Any) -> Dict[str, Any]:
+    stub = {
+        "ax_workflow_name": f"{input_pack.job_meta.job_title} AX Workflow (stub)",
+        "ax_workflow_description": "Stub AX workflow result",
+        "mode": "poc_stub",
+        "mermaid_arch_code": input_pack.workflow_blueprint_mermaid or "flowchart TD\n    T1-->T2",
+        "agent_table": [],
+        "validator_layer_json": {},
+        "metrics_plan_json": {},
+    }
+    if extra:
+        stub.update(extra)
+    return stub
+
+
+def _stub_agent_architect(payload: Dict[str, Any], **extra: Any) -> Dict[str, Any]:
+    stub = {"agent_specs": []}
+    if extra:
+        stub.update(extra)
+    return stub
+
+
+def _stub_deep_skill_research(payload: DeepSkillResearchInput, **extra: Any) -> Dict[str, Any]:
+    stub = {
+        "agent_id": payload.agent.agent_id,
+        "research_focus": "skill",
+        "sections": {
+            "core_skills": "Stub core skills",
+            "thinking_process": "Stub thinking process",
+            "frameworks_and_questions": "Stub frameworks",
+            "common_pitfalls": "Stub pitfalls",
+            "good_vs_bad_examples": "Stub examples",
+        },
+    }
+    if extra:
+        stub.update(extra)
+    return stub
+
+
+def _stub_skill_extractor(payload: Dict[str, Any], **extra: Any) -> Dict[str, Any]:
+    stub = {
+        "skill_cards": [],
+        "agent_skill_map": [],
+    }
+    if extra:
+        stub.update(extra)
+    return stub
+
+
+def _stub_prompt_builder(payload: PromptBuilderInput, **extra: Any) -> Dict[str, Any]:
+    stub = {"agent_prompts": []}
+    if extra:
+        stub.update(extra)
     return stub
 
 

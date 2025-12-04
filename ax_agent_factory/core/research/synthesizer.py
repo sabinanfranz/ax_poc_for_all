@@ -19,11 +19,15 @@ def run_job_research_summarize(
     if job_run.id is None:
         raise ValueError("JobRun id is required to save research results.")
 
+    job_meta = collect_result.job_meta or {
+        "company_name": job_run.company_name,
+        "job_title": job_run.job_title,
+        "industry_context": job_run.industry_context,
+        "business_goal": job_run.business_goal,
+    }
+
     llm_output = llm_client.call_job_research_summarize(
-        job_meta={
-            "company_name": job_run.company_name,
-            "job_title": job_run.job_title,
-        },
+        job_meta=job_meta,
         raw_sources=collect_result.raw_sources,
         manual_jd_text=manual_jd_text,
         job_run_id=job_run.id,

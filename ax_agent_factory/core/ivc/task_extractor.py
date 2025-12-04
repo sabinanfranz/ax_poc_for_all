@@ -30,7 +30,7 @@ class IVCTaskExtractor:
         template = load_prompt("ivc_task_extractor")
         return template.replace("{input_json}", json.dumps(input_json, ensure_ascii=False))
 
-    def run(self, job_input: JobInput) -> TaskExtractionResult:
+    def run(self, job_input: JobInput, *, job_run_id: Optional[int] = None) -> TaskExtractionResult:
         """프롬프트 생성 → LLM 호출 → 파싱."""
         logger.info(
             "IVC TaskExtractor started for job_title=%s, company_name=%s",
@@ -40,6 +40,7 @@ class IVCTaskExtractor:
         try:
             llm_output = call_task_extractor(
                 job_input.model_dump(),
+                job_run_id=job_run_id,
                 llm_client_override=self.llm,
             )
             result = parse_task_extraction_dict(llm_output)

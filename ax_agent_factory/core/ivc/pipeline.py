@@ -35,7 +35,7 @@ def run_ivc_pipeline(
     extractor = IVCTaskExtractor(llm_client=llm_client)
     classifier = IVCPhaseClassifier(llm_client=llm_client)
 
-    extraction_result: TaskExtractionResult = extractor.run(job_input)
+    extraction_result: TaskExtractionResult = extractor.run(job_input, job_run_id=job_run_id)
     if job_run_id is not None:
         try:
             db.save_task_atoms(job_run_id, extraction_result.task_atoms)
@@ -47,7 +47,7 @@ def run_ivc_pipeline(
         raw_job_desc=job_input.raw_job_desc,
         task_atoms=extraction_result.task_atoms,
     )
-    classification_result = classifier.run(classifier_input)
+    classification_result = classifier.run(classifier_input, job_run_id=job_run_id)
     if job_run_id is not None:
         try:
             db.apply_ivc_classification(job_run_id, classification_result.ivc_tasks)

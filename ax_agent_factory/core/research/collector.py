@@ -18,6 +18,13 @@ def run_job_research_collect(job_run: JobRun, manual_jd_text: Optional[str] = No
     if job_run.id is None:
         raise ValueError("JobRun id is required to save research collect results.")
 
+    job_meta = {
+        "company_name": job_run.company_name,
+        "job_title": job_run.job_title,
+        "industry_context": job_run.industry_context,
+        "business_goal": job_run.business_goal,
+    }
+
     llm_output = llm_client.call_job_research_collect(
         company_name=job_run.company_name,
         job_title=job_run.job_title,
@@ -27,6 +34,7 @@ def run_job_research_collect(job_run: JobRun, manual_jd_text: Optional[str] = No
 
     result = JobResearchCollectResult(
         job_run_id=job_run.id,
+        job_meta=job_meta,
         raw_sources=llm_output.get("raw_sources", []),
     )
 

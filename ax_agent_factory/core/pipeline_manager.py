@@ -96,7 +96,7 @@ class PipelineManager:
             job_meta=JobMeta(
                 company_name=job_run.company_name,
                 job_title=job_run.job_title,
-                industry_context=job_run.industry_context or "",
+                industry_context=job_run.industry_context,
                 business_goal=job_run.business_goal,
             ),
             raw_job_desc=job_research_result.raw_job_desc,
@@ -114,7 +114,7 @@ class PipelineManager:
             job_meta=JobMeta(
                 company_name=job_run.company_name,
                 job_title=job_run.job_title,
-                industry_context=job_run.industry_context or "",
+                industry_context=job_run.industry_context,
                 business_goal=job_run.business_goal,
             ),
             raw_job_desc=job_research_result.raw_job_desc,
@@ -174,17 +174,25 @@ class PipelineManager:
             raise ValueError("job_run is required for Stage 1.2 Static classifier")
         return run_static_classifier(phase_result, job_run_id=job_run.id, llm_client=llm_client)
 
-    def run_stage_2_1_workflow_struct(self, job_run: JobRun, phase_result, *, llm_client=None):
+    def run_stage_2_1_workflow_struct(self, job_run: JobRun, phase_result, *, static_result=None, llm_client=None):
         if job_run is None or job_run.id is None:
             raise ValueError("job_run is required for Stage 2.1 Workflow")
         planner = WorkflowStructPlanner(llm_client=llm_client)
         job_meta = JobMeta(
             company_name=job_run.company_name,
             job_title=job_run.job_title,
-            industry_context=job_run.industry_context or "",
+            industry_context=job_run.industry_context,
             business_goal=job_run.business_goal,
         )
-        plan = planner.run(job_meta, phase_result.dict())
+        ivc_payload = phase_result.dict()
+        if static_result is not None:
+            static_meta = getattr(static_result, "task_static_meta", None)
+            if static_meta is not None:
+                ivc_payload["task_static_meta"] = [
+                    m.model_dump() if hasattr(m, "model_dump") else m for m in static_meta
+                ]
+            ivc_payload["static_summary"] = getattr(static_result, "static_summary", None)
+        plan = planner.run(job_meta, ivc_payload, job_run_id=job_run.id)
         try:
             db.apply_workflow_plan(job_run.id, plan)
         except Exception:
@@ -195,7 +203,7 @@ class PipelineManager:
         if job_run is None or job_run.id is None:
             raise ValueError("job_run is required for Stage 2.2 Workflow")
         renderer = WorkflowMermaidRenderer(llm_client=llm_client)
-        mermaid = renderer.run(workflow_plan)
+        mermaid = renderer.run(workflow_plan, job_run_id=job_run.id)
         return mermaid
 
     def run_stage_3_workflow(self, *args, **kwargs):  # pragma: no cover - stub
@@ -209,7 +217,7 @@ class PipelineManager:
         job_meta = JobMeta(
             company_name=job_run.company_name,
             job_title=job_run.job_title,
-            industry_context=job_run.industry_context or "",
+            industry_context=job_run.industry_context,
             business_goal=job_run.business_goal,
         )
         return run_workflow(
@@ -301,7 +309,9 @@ class PipelineManager:
                 phase = results.get("stage1_phase")
                 if phase is None:
                     raise ValueError("Phase result missing for Workflow Struct")
-                plan = self.run_stage_2_1_workflow_struct(job_run, phase, llm_client=llm_client)
+                plan = self.run_stage_2_1_workflow_struct(
+                    job_run, phase, static_result=results.get("stage1_static"), llm_client=llm_client
+                )
                 results["stage2_plan"] = plan
             elif stage.id == "S2_2_WORKFLOW_MERMAID":
                 plan = results.get("stage2_plan")
@@ -309,7 +319,9 @@ class PipelineManager:
                     phase = results.get("stage1_phase")
                     if phase is None:
                         raise ValueError("Workflow plan missing and phase_result unavailable")
-                    plan = self.run_stage_2_1_workflow_struct(job_run, phase, llm_client=llm_client)
+                    plan = self.run_stage_2_1_workflow_struct(
+                        job_run, phase, static_result=results.get("stage1_static"), llm_client=llm_client
+                    )
                     results["stage2_plan"] = plan
                 mermaid = self.run_stage_2_2_workflow_mermaid(job_run, plan, llm_client=llm_client)
                 results["stage2_mermaid"] = mermaid

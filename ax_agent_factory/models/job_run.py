@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, List
+from typing import Any, List, Optional
 
 
 @dataclass
@@ -37,3 +37,4 @@ class JobResearchCollectResult:
 
     job_run_id: int
     raw_sources: List[dict[str, Any]]
+    job_meta: Optional[dict[str, Any]] = None

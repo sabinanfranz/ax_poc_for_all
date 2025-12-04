@@ -1,5 +1,5 @@
 # Stage Runner 패턴
-> Last updated: 2025-12-03 (by AX Agent Factory Codex)
+> Last updated: 2025-12-04 (by AX Agent Factory Codex)
 
 ## 개념
 - 모든 Stage(0.1 Collect, 0.2 Summarize, 1-A Task Extractor, 1-B Phase Classifier)가 공유하는 **입력 정규화 → 프롬프트/LLM 호출 → JSON 정규화/파싱 → 스키마 검증 → 디버그 필드 부착 → 캐시/로깅 → 다음 Stage 전달** 흐름을 일관 패턴으로 정의한다.
@@ -8,11 +8,11 @@
 ## 실행 라이프사이클
 1) **입력 수집/정규화**: Pydantic/dataclass를 JSON(dict)으로 직렬화. 필요 시 job_run_id, prompt_version, model_name, manual_jd_text 포함.
 2) **프롬프트 구성**: `prompts/<stage>.txt`에 `{input_json}` 혹은 개별 플레이스홀더를 채워 넣는다.
-3) **LLM 호출**: `infra.llm_client.call_<stage>` 헬퍼를 사용. 옵션: model, max_tokens(기본 16384), llm_client_override(테스트/페이크), job_run_id, stage_name, prompt_version.
+3) **LLM 호출**: `infra.llm_client.call_<stage>` 헬퍼를 사용. 옵션: model, max_tokens(기본 81920), llm_client_override(테스트/페이크), job_run_id, stage_name, prompt_version.
 4) **JSON 정규화/파싱**: `_extract_json_from_text` → `_parse_json_candidates` 로 코드펜스/서술을 제거하고 여러 후보를 순차 파싱(Workflow는 `_sanitize_workflow_text` 포함).
-5) **검증/변환**: Stage별 `parse_*_dict` 또는 Pydantic 스키마(`WorkflowPlan`, `MermaidDiagram`)로 변환.
+5) **검증/변환**: Stage별 `parse_*_dict` 또는 Pydantic 스키마(`WorkflowPlan`, `MermaidDiagram`, `StaticClassificationResult`)로 변환.
 6) **디버그 부착**: `_raw_text`/`_cleaned_json`/`llm_error`를 결과 객체에 `llm_raw_text`/`llm_cleaned_json`/`llm_error`로 복사(UI/테스트용).
-7) **저장/전달**: Stage 0.1/0.2는 DB 저장, Stage 1/3은 메모리 전달. 다음 Stage 입력으로 필요한 최소 필드를 그대로 복사.
+7) **저장/전달**: Stage 0.1/0.2는 DB 저장, Stage 1/1.3/2는 메모리 전달 + `job_tasks`/`job_task_edges` 업데이트. 다음 Stage 입력으로 필요한 최소 필드를 그대로 복사.
 8) **로깅**: `llm_call_logs`에 stage_name/status(stub_fallback/json_parse_error/success) 기록.
 
 ## 실패/스텁 정책

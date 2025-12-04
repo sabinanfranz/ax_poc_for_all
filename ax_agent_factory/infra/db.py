@@ -84,6 +84,7 @@ def _ensure_tables() -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             job_run_id INTEGER NOT NULL,
             raw_sources_json TEXT NOT NULL,
+            job_meta_json TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             FOREIGN KEY(job_run_id) REFERENCES job_runs(id),
@@ -92,6 +93,7 @@ def _ensure_tables() -> None:
         """
     )
     _add_column_if_missing(cur, "job_research_collect_results", "raw_sources_json", "TEXT")
+    _add_column_if_missing(cur, "job_research_collect_results", "job_meta_json", "TEXT")
     _add_column_if_missing(cur, "job_research_collect_results", "created_at", "TEXT")
     _add_column_if_missing(cur, "job_research_collect_results", "updated_at", "TEXT")
     cur.execute(
@@ -184,6 +186,128 @@ def _ensure_tables() -> None:
     )
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_llm_call_logs_stage ON llm_call_logs (stage_name, created_at)"
+    )
+    # AX extension tables (Stage 4~8)
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ax_workflows (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_run_id INTEGER NOT NULL,
+            workflow_name TEXT NOT NULL,
+            workflow_summary TEXT,
+            ax_workflow_mermaid_code TEXT,
+            agent_table_json TEXT,
+            n8n_workflows_json TEXT,
+            sheet_schemas_json TEXT,
+            validator_plan_json TEXT,
+            observability_plan_json TEXT,
+            mode TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(job_run_id) REFERENCES job_runs(id)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ax_agents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_run_id INTEGER NOT NULL,
+            agent_id TEXT NOT NULL,
+            agent_name TEXT NOT NULL,
+            stage_stream_step TEXT,
+            agent_type TEXT,
+            execution_environment TEXT,
+            n8n_workflow_id TEXT,
+            n8n_node_name TEXT,
+            primary_sheet TEXT,
+            rag_enabled INTEGER,
+            file_search_corpus_hint TEXT,
+            domain_context TEXT,
+            role_and_goal TEXT,
+            success_metrics_json TEXT,
+            error_policy TEXT,
+            validation_policy TEXT,
+            notes TEXT,
+            agent_spec_json TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(job_run_id) REFERENCES job_runs(id),
+            UNIQUE(job_run_id, agent_id)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ax_agent_task_links (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_run_id INTEGER NOT NULL,
+            agent_id TEXT NOT NULL,
+            task_id TEXT NOT NULL,
+            link_type TEXT,
+            notes TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(job_run_id) REFERENCES job_runs(id)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ax_deep_research_docs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_run_id INTEGER NOT NULL,
+            agent_id TEXT NOT NULL,
+            research_focus TEXT,
+            sections_json TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(job_run_id) REFERENCES job_runs(id)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ax_skills (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_run_id INTEGER NOT NULL,
+            skill_public_id TEXT NOT NULL,
+            skill_name TEXT NOT NULL,
+            target_agent_ids_json TEXT,
+            related_task_ids_json TEXT,
+            purpose TEXT,
+            when_to_use TEXT,
+            core_heuristics_json TEXT,
+            step_checklist_json TEXT,
+            bad_signs_json TEXT,
+            good_signs_json TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(job_run_id) REFERENCES job_runs(id),
+            UNIQUE(job_run_id, skill_public_id)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ax_prompts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_run_id INTEGER NOT NULL,
+            agent_id TEXT NOT NULL,
+            execution_environment TEXT,
+            prompt_version TEXT,
+            single_prompt TEXT,
+            system_prompt TEXT,
+            user_prompt_template TEXT,
+            logic_hint TEXT,
+            human_checklist TEXT,
+            examples_json TEXT,
+            mode TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(job_run_id) REFERENCES job_runs(id)
+        )
+        """
     )
     conn.commit()
     conn.close()
@@ -299,6 +423,18 @@ def get_latest_job_run() -> Optional[JobRun]:
     return _row_to_job_run(row)
 
 
+def get_job_run(job_run_id: int) -> Optional[JobRun]:
+    """Fetch a JobRun by id."""
+    conn = _get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM job_runs WHERE id = ?", (job_run_id,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return _row_to_job_run(row)
+
+
 def save_job_research_result(result: JobResearchResult) -> None:
     """Insert or replace a JobResearchResult."""
     conn = _get_conn()
@@ -349,22 +485,41 @@ def save_job_research_collect_result(result: JobResearchCollectResult) -> None:
     cur = conn.cursor()
     now = datetime.utcnow().isoformat()
     has_legacy_column = _table_has_column(cur, "job_research_collect_results", "raw_sources")
+    has_job_meta_column = _table_has_column(cur, "job_research_collect_results", "job_meta_json")
     raw_sources_json = json.dumps(result.raw_sources, ensure_ascii=False)
+    job_meta_json = json.dumps(result.job_meta or {}, ensure_ascii=False)
+
+    columns = ["job_run_id"]
+    values = [result.job_run_id]
+    update_parts = []
+
+    if has_legacy_column:
+        columns.append("raw_sources")
+        values.append(raw_sources_json)
+        update_parts.append("raw_sources = excluded.raw_sources")
+
+    columns.append("raw_sources_json")
+    values.append(raw_sources_json)
+    update_parts.append("raw_sources_json = excluded.raw_sources_json")
+
+    if has_job_meta_column:
+        columns.append("job_meta_json")
+        values.append(job_meta_json)
+        update_parts.append("job_meta_json = excluded.job_meta_json")
+
+    columns.extend(["created_at", "updated_at"])
+    values.extend([now, now])
+    update_parts.append("updated_at = excluded.updated_at")
+
+    placeholders = ", ".join(["?"] * len(columns))
     cur.execute(
         f"""
-        INSERT INTO job_research_collect_results (
-            job_run_id,
-            {"raw_sources," if has_legacy_column else ""} raw_sources_json,
-            created_at,
-            updated_at
-        )
-        VALUES (?, {"?," if has_legacy_column else ""} ?, ?, ?)
+        INSERT INTO job_research_collect_results ({", ".join(columns)})
+        VALUES ({placeholders})
         ON CONFLICT(job_run_id) DO UPDATE SET
-            {"raw_sources = excluded.raw_sources," if has_legacy_column else ""}
-            raw_sources_json = excluded.raw_sources_json,
-            updated_at = excluded.updated_at
+            {", ".join(update_parts)}
         """,
-        (result.job_run_id, raw_sources_json, now, now) if not has_legacy_column else (result.job_run_id, raw_sources_json, raw_sources_json, now, now),
+        tuple(values),
     )
     conn.commit()
     conn.close()
@@ -410,31 +565,39 @@ def get_job_research_collect_result(job_run_id: int) -> Optional[JobResearchColl
     conn = _get_conn()
     cur = conn.cursor()
     has_legacy_column = _table_has_column(cur, "job_research_collect_results", "raw_sources")
+    has_job_meta_column = _table_has_column(cur, "job_research_collect_results", "job_meta_json")
     if has_legacy_column:
         cur.execute(
             """
             SELECT job_run_id,
                    COALESCE(raw_sources_json, raw_sources) AS raw_sources_json
+                   {job_meta}
             FROM job_research_collect_results
             WHERE job_run_id = ?
-            """,
+            """.format(
+                job_meta=", job_meta_json" if has_job_meta_column else ""
+            ),
             (job_run_id,),
         )
     else:
         cur.execute(
             """
-            SELECT job_run_id, raw_sources_json
+            SELECT job_run_id, raw_sources_json {job_meta}
             FROM job_research_collect_results
             WHERE job_run_id = ?
-            """,
+            """.format(
+                job_meta=", job_meta_json" if has_job_meta_column else ""
+            ),
             (job_run_id,),
         )
     row = cur.fetchone()
     conn.close()
     if not row:
         return None
+    job_meta_json = row["job_meta_json"] if has_job_meta_column else None
     return JobResearchCollectResult(
         job_run_id=row["job_run_id"],
+        job_meta=json.loads(job_meta_json) if job_meta_json else None,
         raw_sources=json.loads(row["raw_sources_json"]),
     )
 

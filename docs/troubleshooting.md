@@ -1,11 +1,13 @@
 # Troubleshooting
-> Last updated: 2025-12-02 (by AX Agent Factory Codex)
+> Last updated: 2025-12-04 (by AX Agent Factory Codex)
 
 ## LLM/JSON 관련
 - **API 키 없음/오류**: `GOOGLE_API_KEY`가 없거나 잘못되면 Stage 0/1이 스텁으로 동작한다. 실제 호출이 필요하면 유효한 키와 web_browsing 지원 모델(`gemini-2.5-flash` 등) 설정.
 - **JSON 파싱 실패**: `_extract_json_from_text`가 코드블록/잡설을 제거해도 `{}`가 없으면 InvalidLLMJsonError가 발생. Stage 0은 `_stub_job_research`로, Stage 1은 `_stub_result`로 폴백. UI의 “LLM 응답/에러” 탭에서 raw/error 확인.
 - **모델 기능 미지원**: web_search 미지원 모델로 호출 시 응답이 비어 파싱 실패 가능 → `GEMINI_MODEL`을 기본값으로 되돌린다.
 - **Workflow JSON 실패**: Stage 3(2.1/2.2)에서도 파싱 실패 시 스텁이 반환된다. mermaid_code가 단순 흐름만 그려질 수 있으므로 입력을 재검토하거나 키를 확인한다.
+- **NOT NULL 제약 오류**: 기존 DB에 legacy 컬럼(raw_sources/research_sources)만 있을 때 발생 가능. 현재 코드는 legacy 컬럼까지 함께 채우므로 최신 코드로 재실행하거나 DB를 재생성/백업 후 삭제.
+- **느린 응답**: 기본 `max_tokens=81920`으로 설정되어 LLM 호출이 길어질 수 있다. 빠른 확인용으로는 `GEMINI_MODEL`을 빠른 모델로 바꾸거나, 코드에서 max_tokens를 줄여 테스트한다.
 
 ## 환경 변수/경로
 - **ModuleNotFoundError**: 항상 리포 루트에서 `streamlit run ax_agent_factory/app.py` 실행. `ax_agent_factory/__init__.py` 존재 여부 확인.
@@ -17,6 +19,7 @@
 - **버튼 반응 없음**: 회사명/직무명 필수. Stage 1은 Stage 0 결과가 DB/세션에 있어야 한다.
 - **task_atoms가 비어 있음**: LLM 스텁이 동작했거나 Stage 1 미실행. Stage 1 실행 시 파이프라인이 `task_atoms`를 Phase 결과에 다시 붙여서 UI에 노출한다.
 - **로그 중복/시끄러움**: `infra/logging_config.setup_logging`은 중복 호출을 방지하는 플래그를 가진다. Streamlit 재실행으로 로그 핸들러가 2중 등록되면 세션 재시작.
+- **탭에 결과 미표시**: 세션 키(`stage0_collect_result`, `stage0_summarize_result`, `stage1_task_result`, `stage1_phase_result`, `stage1_static_result`, `workflow_plan`, `workflow_mermaid`)가 비었을 수 있다. 버튼 재실행으로 채운다.
 
 ## 테스트/검증
 - 실행: `python -m pytest ax_agent_factory/tests`

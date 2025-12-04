@@ -25,7 +25,7 @@ class WorkflowStructPlanner:
     def __init__(self, llm_client=None) -> None:
         self.llm = llm_client
 
-    def run(self, job_meta: JobMeta, ivc_payload: dict) -> WorkflowPlan:
+    def run(self, job_meta: JobMeta, ivc_payload: dict, *, job_run_id: Optional[int] = None) -> WorkflowPlan:
         """job_meta + ivc_tasks/task_atoms로 워크플로우 구조화."""
         logger.info("Workflow Struct planner started for job_title=%s", job_meta.job_title)
         payload = {
@@ -34,9 +34,15 @@ class WorkflowStructPlanner:
             "task_atoms": ivc_payload.get("task_atoms"),
             "ivc_tasks": ivc_payload.get("ivc_tasks"),
             "phase_summary": ivc_payload.get("phase_summary"),
+            "task_static_meta": ivc_payload.get("task_static_meta"),
+            "static_summary": ivc_payload.get("static_summary"),
         }
         try:
-            llm_output = call_workflow_struct(payload, llm_client_override=self.llm)
+            llm_output = call_workflow_struct(
+                payload,
+                llm_client_override=self.llm,
+                job_run_id=job_run_id,
+            )
             result = WorkflowPlan(**llm_output)
             if hasattr(result, "llm_raw_text"):
                 result.llm_raw_text = llm_output.get("_raw_text")  # type: ignore[attr-defined]
@@ -59,10 +65,14 @@ class WorkflowMermaidRenderer:
     def __init__(self, llm_client=None) -> None:
         self.llm = llm_client
 
-    def run(self, workflow_plan: WorkflowPlan) -> MermaidDiagram:
+    def run(self, workflow_plan: WorkflowPlan, *, job_run_id: Optional[int] = None) -> MermaidDiagram:
         logger.info("Workflow Mermaid rendering started for workflow=%s", workflow_plan.workflow_name)
         try:
-            llm_output = call_workflow_mermaid(workflow_plan.model_dump(), llm_client_override=self.llm)
+            llm_output = call_workflow_mermaid(
+                workflow_plan.model_dump(),
+                llm_client_override=self.llm,
+                job_run_id=job_run_id,
+            )
             result = MermaidDiagram(**llm_output)
             if hasattr(result, "llm_raw_text"):
                 result.llm_raw_text = llm_output.get("_raw_text")  # type: ignore[attr-defined]
@@ -90,11 +100,11 @@ def run_workflow(
     planner = WorkflowStructPlanner(llm_client=llm_client)
     renderer = WorkflowMermaidRenderer(llm_client=llm_client)
 
-    plan = planner.run(job_meta, ivc_payload)
+    plan = planner.run(job_meta, ivc_payload, job_run_id=job_run_id)
     if job_run_id is not None:
         try:
             db.apply_workflow_plan(job_run_id, plan)
         except Exception:
             logger.exception("Failed to persist workflow plan to job_tasks/job_task_edges")
-    mermaid = renderer.run(plan)
+    mermaid = renderer.run(plan, job_run_id=job_run_id)
     return plan, mermaid

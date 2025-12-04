@@ -1,5 +1,5 @@
 # AX Agent Factory – Prompt Guidelines
-> Last updated: 2025-12-03 (by AX Agent Factory Codex)
+> Last updated: 2025-12-04 (by AX Agent Factory Codex)
 
 ## 공통 원칙
 - **JSON Only**: 출력은 하나의 JSON 객체. 코드블록(````), 설명 텍스트 금지.
@@ -21,6 +21,10 @@
   - 출력 키: `job_meta`, `raw_job_desc`, `task_atoms`, `ivc_tasks`, `phase_summary` 외 금지.
   - Phase 정의/규칙을 짧게 제시하고, reason을 한국어 1~2문장으로 요구.
   - 주의: 예시는 `phase/reason` 등을 사용하지만, 스키마는 `ivc_phase/ivc_exec_subphase/primitive_lv1/classification_reason`을 기대하므로 프롬프트를 스키마에 맞춰 유지.
+- **Stage 1.3 – Static Task Classifier (`prompts/static_task_classifier.txt`)**
+  - 입력: PhaseClassificationResult 전체(dict).
+  - 출력 키: `job_meta`, `task_static_meta`(정적 유형/도메인/RAG/가치/복잡도/env/tags/entities), `static_summary`.
+  - JSON-only, 코드블록 금지, 입력 복사 규칙 명시.
 - **Stage 3-A – Workflow Struct (`prompts/workflow_struct.txt`)**
   - 입력 `job_meta`, `raw_job_desc`, `task_atoms`, `ivc_tasks`, `phase_summary`를 그대로 복사.
   - 허용 top-level 키: `workflow_name`, `workflow_summary`, `stages`, `streams`, `nodes`, `edges`, `entry_points`, `exit_points`, `notes`.
