@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 import html
 import json
+from collections import Counter
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -21,6 +22,8 @@ from ax_agent_factory.models.stages import PIPELINE_STAGES
 from ax_agent_factory.infra import db
 from ax_agent_factory.infra import ax_workflow_repo, ax_agent_repo, ax_skill_repo
 from ax_agent_factory.infra.logging_config import setup_logging
+from ax_agent_factory.core.schemas.workflow import MermaidDiagram
+from types import SimpleNamespace
 
 
 st.set_page_config(page_title="AX Agent Factory - PoC", layout="wide")
@@ -507,11 +510,116 @@ def render_stage0_summarize_tabs(job_run, job_research_result, manual_jd_text: s
         )
 
 
+def _db_rows_to_task_atoms(rows: list[dict]) -> list[dict]:
+    """Convert job_tasks rows into task_atoms-like dicts."""
+    return [
+        {
+            "task_id": row.get("task_id"),
+            "task_original_sentence": row.get("task_original_sentence"),
+            "task_korean": row.get("task_korean"),
+            "task_english": row.get("task_english"),
+            "notes": row.get("notes"),
+        }
+        for row in rows or []
+    ]
+
+
+def _db_rows_to_ivc_tasks(rows: list[dict]) -> list[dict]:
+    """Convert job_tasks rows into ivc_tasks-like dicts."""
+    ivc_tasks: list[dict] = []
+    for row in rows or []:
+        if row.get("ivc_phase"):
+            ivc_tasks.append(
+                {
+                    "task_id": row.get("task_id"),
+                    "task_korean": row.get("task_korean"),
+                    "task_original_sentence": row.get("task_original_sentence"),
+                    "ivc_phase": row.get("ivc_phase"),
+                    "ivc_exec_subphase": row.get("ivc_exec_subphase"),
+                    "primitive_lv1": row.get("primitive_lv1"),
+                    "classification_reason": row.get("classification_reason"),
+                }
+            )
+    return ivc_tasks
+
+
+def _db_rows_to_phase_summary(rows: list[dict]) -> dict:
+    """Build a simple phase_summary-style dict from job_tasks rows."""
+    counter: Counter[str] = Counter()
+    for row in rows or []:
+        phase = row.get("ivc_phase")
+        if phase:
+            counter[phase] += 1
+    return {phase: {"count": count} for phase, count in counter.items()}
+
+
+def _db_rows_to_static_meta(rows: list[dict]) -> list[dict]:
+    """Extract static classification style rows from job_tasks."""
+    static_meta: list[dict] = []
+    for row in rows or []:
+        if any(
+            row.get(field)
+            for field in [
+                "static_type_lv1",
+                "static_type_lv2",
+                "domain_lv1",
+                "domain_lv2",
+                "rag_required",
+                "recommended_execution_env",
+            ]
+        ):
+            static_meta.append(
+                {
+                    "task_id": row.get("task_id"),
+                    "task_korean": row.get("task_korean"),
+                    "static_type_lv1": row.get("static_type_lv1"),
+                    "static_type_lv2": row.get("static_type_lv2"),
+                    "domain_lv1": row.get("domain_lv1"),
+                    "domain_lv2": row.get("domain_lv2"),
+                    "rag_required": bool(row.get("rag_required")),
+                    "rag_reason": row.get("rag_reason"),
+                    "value_score": row.get("value_score"),
+                    "complexity_score": row.get("complexity_score"),
+                    "value_complexity_quadrant": row.get("value_complexity_quadrant"),
+                    "recommended_execution_env": row.get("recommended_execution_env"),
+                    "autoability_reason": row.get("autoability_reason"),
+                    "data_entities": json.loads(row["data_entities_json"]) if row.get("data_entities_json") else [],
+                    "tags": json.loads(row["tags_json"]) if row.get("tags_json") else [],
+                }
+            )
+    return static_meta
+
+
+def _db_rows_to_static_summary(rows: list[dict]) -> dict:
+    """Summarize static meta counts for fallback rendering."""
+    counter: Counter[str] = Counter()
+    for row in rows or []:
+        static_type = row.get("static_type_lv1")
+        if static_type:
+            counter[static_type] += 1
+    if not counter:
+        return {}
+    return {"static_type_lv1_counts": dict(counter)}
+
+
+def _load_latest_llm_log(job_run_id: int | None, stage_name: str) -> dict | None:
+    """Fetch the latest LLM call log for a stage and job_run_id."""
+    if job_run_id is None:
+        return None
+    calls = db.get_llm_calls_by_job_run(job_run_id)
+    for call in calls:
+        if call.stage_name == stage_name:
+            return call.__dict__
+    return None
+
+
 def render_stage1_task_extractor_tabs(job_run, job_research_result, task_result, manual_jd_text: str | None = None) -> None:
     """Render Task Extractor with Stage 0-style flat sub tabs."""
     # DB fallback if session is empty
     if job_research_result is None and job_run is not None:
         job_research_result = db.get_job_research_result(job_run.id)
+    db_task_rows = db.get_job_tasks(job_run.id) if job_run is not None else []
+    fallback_task_atoms = _db_rows_to_task_atoms(db_task_rows)
     tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
 
     with tabs[0]:
@@ -523,8 +631,8 @@ def render_stage1_task_extractor_tabs(job_run, job_research_result, task_result,
                     "job_meta": {
                         "company_name": job_run.company_name,
                         "job_title": job_run.job_title,
-                        "industry_context": "",
-                        "business_goal": None,
+                        "industry_context": job_run.industry_context,
+                        "business_goal": job_run.business_goal,
                     },
                     "raw_job_desc": job_research_result.raw_job_desc,
                     "manual_jd_text": manual_jd_text or None,
@@ -533,14 +641,17 @@ def render_stage1_task_extractor_tabs(job_run, job_research_result, task_result,
 
     # 결과
     with tabs[1]:
-        if task_result is None:
-            st.warning("아직 IVC 결과가 없습니다. 사이드바에서 0~1단계 실행을 눌러주세요.")
-        else:
+        if task_result is None and not fallback_task_atoms:
+            st.warning("아직 IVC 결과가 없습니다. 사이드바에서 0~1단계를 실행해 주세요.")
+        elif task_result is not None:
             st.subheader("task_atoms")
             if getattr(task_result, "task_atoms", None):
                 st.json([t.dict() if hasattr(t, "dict") else t for t in task_result.task_atoms])
             else:
                 st.info("task_atoms가 비어 있습니다. (LLM 스텁 또는 파이프라인 미실행)")
+        else:
+            st.info("세션 캐시가 비어 있어 DB에 저장된 task_atoms를 표시합니다.")
+            st.json(fallback_task_atoms)
 
     # LLM 원문
     with tabs[2]:
@@ -607,6 +718,9 @@ def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result
         tasks = db.get_job_tasks(job_run.id)
     else:
         tasks = None
+    fallback_ivc_tasks = _db_rows_to_ivc_tasks(tasks or [])
+    fallback_phase_summary = _db_rows_to_phase_summary(tasks or [])
+    fallback_task_atoms = _db_rows_to_task_atoms(tasks or [])
     tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
 
     with tabs[0]:
@@ -616,7 +730,7 @@ def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result
             task_atoms = (
                 [t.dict() if hasattr(t, "dict") else t for t in (ivc_result.task_atoms or [])]
                 if ivc_result
-                else tasks
+                else fallback_task_atoms
             )
             st.json(
                 {
@@ -628,7 +742,7 @@ def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result
 
     # 결과
     with tabs[1]:
-        if ivc_result is None and not tasks:
+        if ivc_result is None and not tasks and not fallback_ivc_tasks:
             st.warning("아직 IVC 결과가 없습니다. 사이드바에서 0~1단계 실행을 눌러주세요.")
         else:
             st.subheader("ivc_tasks")
@@ -636,6 +750,12 @@ def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result
                 st.json([t.dict() if hasattr(t, "dict") else t for t in ivc_result.ivc_tasks])
                 st.subheader("phase_summary")
                 st.json(ivc_result.phase_summary.dict())
+            elif fallback_ivc_tasks:
+                st.info("세션 캐시가 비어 있어 DB에 저장된 IVC 분류 결과를 표시합니다.")
+                st.json(fallback_ivc_tasks)
+                if fallback_phase_summary:
+                    st.subheader("phase_summary (DB)")
+                    st.json(fallback_phase_summary)
             else:
                 st.info("DB에 저장된 task_atoms만 표시합니다 (ivc_tasks 없음).")
 
@@ -702,6 +822,9 @@ def render_stage1_phase_classifier_tabs(job_run, job_research_result, ivc_result
 def render_stage1_static_classifier_tabs(job_run, phase_result, static_result) -> None:
     """Render Static Task Classifier tabs."""
     tasks = db.get_job_tasks(job_run.id) if job_run is not None else None
+    fallback_static_meta = _db_rows_to_static_meta(tasks or [])
+    fallback_static_summary = _db_rows_to_static_summary(tasks or [])
+    static_log = _load_latest_llm_log(job_run.id if job_run else None, "stage1_static_classifier")
     tabs = st.tabs(["Input", "결과", "LLM Raw", "LLM Cleaned JSON", "Error", "설명", "I/O"])
 
     with tabs[0]:
@@ -711,9 +834,9 @@ def render_stage1_static_classifier_tabs(job_run, phase_result, static_result) -
             st.json(phase_result.dict() if phase_result else {"job_tasks": tasks})
 
     with tabs[1]:
-        if static_result is None:
+        if static_result is None and not fallback_static_meta:
             st.warning("Static 결과가 없습니다. 1.3 단계를 실행하세요.")
-        else:
+        elif static_result is not None:
             st.subheader("task_static_meta")
             st.dataframe(
                 [
@@ -733,11 +856,19 @@ def render_stage1_static_classifier_tabs(job_run, phase_result, static_result) -
             )
             st.subheader("static_summary")
             st.json(static_result.static_summary)
+        else:
+            st.info("세션 캐시가 비어 있어 DB에 저장된 Static 메타를 표시합니다.")
+            st.json(fallback_static_meta)
+            if fallback_static_summary:
+                st.subheader("static_summary (DB)")
+                st.json(fallback_static_summary)
 
     with tabs[2]:
         llm_raw = getattr(static_result, "llm_raw_text", None) if static_result else None
         if llm_raw:
             st.text_area("LLM raw response", value=llm_raw, height=300, key="stage1_static_llm_raw")
+        elif static_log and static_log.get("output_text_raw"):
+            st.text_area("LLM raw response (from log)", value=static_log["output_text_raw"], height=300, key="stage1_static_llm_raw_log")
         elif static_result:
             st.info("LLM 원문이 없습니다. (스텁 또는 로깅 미연동)")
         else:
@@ -747,6 +878,8 @@ def render_stage1_static_classifier_tabs(job_run, phase_result, static_result) -
         cleaned = getattr(static_result, "llm_cleaned_json", None) if static_result else None
         if cleaned:
             st.text_area("정규화된 JSON 문자열", value=cleaned, height=300, key="stage1_static_llm_cleaned")
+        elif static_log and static_log.get("output_json_parsed"):
+            st.text_area("정규화된 JSON 문자열 (from log)", value=static_log["output_json_parsed"], height=300, key="stage1_static_llm_cleaned_log")
         elif static_result:
             st.info("정규화된 JSON 문자열이 없습니다. (LLM 스텁 또는 로깅 미연동)")
         else:
@@ -786,6 +919,8 @@ def render_stage1_static_classifier_tabs(job_run, phase_result, static_result) -
 
 def render_stage2_workflow_struct_tabs(job_run, phase_result, workflow_plan) -> None:
     """Render Workflow Struct (2.1) tabs."""
+    if workflow_plan is None and job_run is not None:
+        workflow_plan = db.get_workflow_plan(job_run.id)
     tasks = db.get_job_tasks(job_run.id) if job_run is not None else None
     edges = db.get_job_task_edges(job_run.id) if job_run is not None else None
     tabs = st.tabs(["Input", "결과", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
@@ -880,6 +1015,19 @@ def render_stage2_workflow_struct_tabs(job_run, phase_result, workflow_plan) -> 
 
 def render_stage2_workflow_mermaid_tabs(job_run, workflow_plan, workflow_mermaid) -> None:
     """Render Workflow Mermaid (2.2) tabs."""
+    mermaid_log = _load_latest_llm_log(job_run.id if job_run else None, "stage2_workflow_mermaid")
+    if workflow_plan is None and job_run is not None:
+        workflow_plan = db.get_workflow_plan(job_run.id)
+    if workflow_mermaid is None and job_run is not None:
+        workflow_mermaid = db.get_workflow_mermaid_result(job_run.id)
+    if workflow_mermaid is None and mermaid_log and mermaid_log.get("output_json_parsed"):
+        try:
+            parsed = json.loads(mermaid_log["output_json_parsed"])
+            workflow_mermaid = MermaidDiagram(**parsed)
+            workflow_mermaid.llm_raw_text = mermaid_log.get("output_text_raw")  # type: ignore[attr-defined]
+            workflow_mermaid.llm_cleaned_json = mermaid_log.get("output_json_parsed")  # type: ignore[attr-defined]
+        except Exception:
+            pass
     tabs = st.tabs(["Input", "결과", "Mermaid 미리보기", "LLM 답변 원문", "LLM 답변 파싱", "에러", "설명", "I/O"])
 
     with tabs[0]:

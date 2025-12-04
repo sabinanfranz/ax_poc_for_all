@@ -16,8 +16,8 @@
 | 1.1 Task Extractor | job_meta, raw_job_desc | task_atoms | UPSERT job_tasks(task_* 기본 컬럼) |
 | 1.2 Phase Classifier | job_meta, task_atoms, raw_job_desc? | ivc_tasks, phase_summary, task_atoms | UPDATE job_tasks ivc_* 컬럼 |
 | 1.3 Static Classifier | PhaseClassificationResult | task_static_meta, static_summary | UPDATE job_tasks static_* 컬럼 |
-| 2.1 Workflow Struct | PhaseClassificationResult(+task_static_meta optional) | stages/streams/nodes/edges/entry/exit | UPDATE job_tasks workflow_* 플래그, REPLACE job_task_edges |
-| 2.2 Workflow Mermaid | WorkflowPlan | workflow_name, mermaid_code, warnings | DB 기록 없음 |
+| 2.1 Workflow Struct | PhaseClassificationResult(+task_static_meta optional) | stages/streams/nodes/edges/entry/exit | UPDATE job_tasks workflow_* 플래그, REPLACE job_task_edges, UPSERT workflow_results.workflow_plan_json |
+| 2.2 Workflow Mermaid | WorkflowPlan | workflow_name, mermaid_code, warnings | UPSERT workflow_results.mermaid_code/warnings_json (+ plan_json 보강) |
 | 4~7 AX (설계) | Workflow/Agents/Skills | AXWorkflowDesignResult 등 | 제안 테이블: ax_workflows/ax_agents/ax_agent_task_links/ax_deep_research_results/ax_skill_cards/ax_prompts |
 
 ## 3. Stage ↔ DB 테이블 매핑
@@ -37,11 +37,11 @@
   - 출력: task_static_meta[*](static_type_lv*, domain_lv*, rag_required, rag_reason, value/complexity/value_complexity_quadrant, recommended_execution_env, autoability_reason, data_entities[], tags[])  
   - DB: job_tasks UPDATE static_type_lv1/2, domain_lv1/2, rag_required(0/1), rag_reason, value_score, complexity_score, value_complexity_quadrant, recommended_execution_env, autoability_reason, data_entities_json, tags_json.
 - Stage 2.1 Workflow Struct  
-  - 출력: nodes(stage_id, stream_id, label, is_entry/is_exit/is_hub), edges(source,target,label?)  
-  - DB: job_tasks UPDATE stage_id/stream_id/workflow_node_label/is_entry/is_exit/is_hub; job_task_edges REPLACE ALL rows for job_run_id.
+  - 출력: nodes(stage_id, stream_id, label, is_entry/is_exit/is_hub), edges(source,target,label?), (static_result가 있을 경우 task_static_meta/static_summary 포함)  
+  - DB: job_tasks UPDATE stage_id/stream_id/workflow_node_label/is_entry/is_exit/is_hub; job_task_edges REPLACE ALL rows for job_run_id; workflow_results.workflow_plan_json UPSERT.
 - Stage 2.2 Workflow Mermaid  
   - 출력: workflow_name, mermaid_code, warnings  
-  - DB: 저장 없음(세션/UI에만 표시).
+  - DB: workflow_results.mermaid_code, warnings_json (workflow_plan_json이 있으면 보강).
 - AX Stage 4~7 (설계)  
   - AXWorkflowDesignResult → ax_workflows, (선택) ax_agents/ax_agent_task_links 시드  
   - AgentSpecsForPromptBuilder → ax_agents(upsert), agent_spec_json  
@@ -71,6 +71,10 @@
   - 목적: 워크플로우 엣지.  
   - 라이프사이클: DELETE+INSERT in apply_workflow_plan.  
   - 컬럼: source_task_id, target_task_id, label?, created_at/updated_at.
+- workflow_results  
+  - 목적: WorkflowPlan/MermaidDiagram 캐시(세션 리셋 대비).  
+  - 라이프사이클: UPSERT save_workflow_plan/save_workflow_mermaid_result, READ UI 폴백.  
+  - 컬럼: workflow_plan_json, mermaid_code, warnings_json, created_at/updated_at (job_run_id UNIQUE).
 - llm_call_logs  
   - 목적: 모든 LLM 호출 메타/파싱 상태 기록.  
   - 라이프사이클: INSERT save_llm_call_log, READ get_llm_calls_by_job_run.  
@@ -85,16 +89,14 @@
 
 ## 5. UX / UI ↔ DB 매핑
 - Streamlit 메인 페이지(app.py)  
-  - Stage 탭: 0.1/0.2/1.1/1.2/1.3/2.1/2.2 모두 세션 상태 우선 사용; 0.x는 DB fallback(get_job_research_result/get_job_research_collect_result).  
-  - Workflow Struct/Mermaid 탭: plan/mermaid 세션 객체 표시, DB(job_tasks/edges) 미노출.  
+  - Stage 탭: 0.1/0.2/1.1/1.2/1.3/2.1/2.2 모두 세션 우선; 세션이 비어도 0.x는 job_research_*, 1.x/2.1은 job_tasks/job_task_edges, 2.1/2.2는 workflow_results/LLM 로그에서 폴백 조회.  
+  - Workflow Struct 탭: 세션 plan이 없어도 DB의 job_tasks/job_task_edges 및 workflow_results.workflow_plan_json을 병렬로 표시. Mermaid 탭도 workflow_results/LLM 로그 폴백을 사용.  
   - Mermaid 미리보기: mermaid_code 렌더링(네트워크로 CDN 로드).  
   - 로그: logs/app.log tail만 표시(LLM 로그 DB는 UI 미노출).  
-  - UI에서 job_tasks/job_task_edges/llm_call_logs는 직접 조회하지 않음(추가 화면 필요).
+  - UI에서 job_tasks/job_task_edges/llm_call_logs 직접 조회 화면은 없음(추가 화면 필요).
 
 ## 6. 일관성 체크 결과 (이슈/TO-DO)
-- AX 테이블/스키마는 문서에 정의만 있고 실제 DB 생성/Runner 연계 미구현. 마이그레이션 및 Stage 4~7 Runner/프롬프트 추가 필요.
-- WorkflowPlan의 workflow_name/workflow_summary는 DB에 저장되지 않아 UI 재로딩 시 Plan 메타가 유지되지 않음(apply_workflow_plan은 nodes/edges만 반영). 필요 시 별도 테이블/컬럼 추가 검토.
+- AX 테이블/스키마는 문서에 정의만 있고 실제 DB 생성/Runner 연계 미구현. Stage 4~7 구현 시 llm_call_logs 정책 재사용 필요.
 - job_task_edges.label 컬럼을 LLM이 채우지 않아 대부분 NULL/빈 문자열 예상. 사용 계획이 있다면 프롬프트/파서에서 값 반영 필요.
-- job_research_collect_results.job_meta_json은 저장되지만 UI 노출/활용 경로가 제한적(Stage 0.2 입력에는 사용되나 화면에 직접 표시되지 않음).
 - job_tasks.review_status 컬럼이 DB에 있지만 어떤 Stage에서도 설정하지 않음. HITL 플로우가 필요하면 Runner/UI 처리 추가 필요.
-- AX Stage에서 요구하는 ax_* 테이블 생성/CRUD/파서/프롬프트가 없음. Stage4~7 구현 시 llm_call_logs stage_name, payload 기록 정책을 재사용하도록 표준화 필요.
+- job_research_collect_results.job_meta_json은 저장되지만 UI에서 직접 노출하지 않음(0.2 입력에는 사용). UI 노출 필요 시 추가 탭/섹션 검토.

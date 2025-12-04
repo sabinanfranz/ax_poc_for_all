@@ -27,8 +27,8 @@
   - 공통 규칙: LLM JSON 하나만 응답, 코드블록 금지, sanitizer/파서로 경미한 오류 흡수, 실패 시 스텁 fallback.
 - **Stage 2: Workflow (구현, UI 2.1/2.2)**
   - 입력: PhaseClassificationResult(1.2) 결과 dict.
-  - 2.1 Workflow Struct: `call_workflow_struct` → `WorkflowPlan` → DB `job_tasks` stage/stream/entry/exit/hub + `job_task_edges`.
-  - 2.2 Workflow Mermaid: `call_workflow_mermaid` → `MermaidDiagram`.
+  - 2.1 Workflow Struct: `call_workflow_struct` → `WorkflowPlan` → DB `job_tasks` stage/stream/entry/exit/hub + `job_task_edges` + `workflow_results.workflow_plan_json` 캐시.
+  - 2.2 Workflow Mermaid: `call_workflow_mermaid` → `MermaidDiagram` → DB `workflow_results.mermaid_code/warnings_json` 캐시.
   - 공통 규칙: JSON-only 응답, sanitizer로 경미한 오류 흡수, 실패/키 부재 시 스텁.
 - **Stage 3~9 이후 (미구현/설계)**: AX/Agent/Skill/Prompt/Runner 등은 설계만 남기고 구현 보류.
 

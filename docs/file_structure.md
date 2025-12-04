@@ -6,6 +6,7 @@ ax_agent_factory/
   app.py                      # Streamlit UI entrypoint (Stage 0/1 실행 탭)
   core/
     pipeline_manager.py       # Stage 실행/캐시 오케스트레이터
+    stage_runner_ax.py        # AX Stage 4~8 실행 헬퍼(AX 테이블/LLM 연결 지점)
     research/                 # Stage 0 Job Research (0.1 Collect → 0.2 Summarize)
       __init__.py
       collector.py            # Stage 0.1 Web Research Collector
@@ -21,10 +22,14 @@ ax_agent_factory/
     schemas/common.py         # IVC 입력/출력 Pydantic 모델
     schemas/workflow.py       # WorkflowPlan / MermaidDiagram Pydantic 모델
   infra/
-    db.py                     # SQLite CRUD(job_runs, job_research_results, job_research_collect_results), AX_DB_PATH로 경로 설정
+    db.py                     # SQLite CRUD(job_runs, job_research_results, job_research_collect_results, job_tasks, job_task_edges), AX_DB_PATH로 경로 설정
     llm_client.py             # Gemini web_browsing 호출기 + JSON 파서/스텁(Stage 0/1/1.3/2)
     prompts.py                # 프롬프트 로더(LRU 캐시)
     logging_config.py         # 콘솔+회전 파일 로깅 설정
+    ax_workflow_repo.py       # AX 워크플로우 테이블 접근(설계 상태)
+    ax_agent_repo.py          # AX 에이전트 테이블 접근(설계 상태)
+    ax_skill_repo.py          # AX 스킬/딥리서치 테이블 접근(설계 상태)
+    ax_prompt_repo.py         # AX 프롬프트 테이블 접근(설계 상태)
   models/
     job_run.py                # JobRun, JobResearchResult, JobResearchCollectResult dataclass
     stages.py                 # Stage 메타데이터(PIPELINE_STAGES, ui_label/ui_group/ui_step/tab_title)
@@ -38,7 +43,7 @@ ax_agent_factory/
     workflow_mermaid.txt      # Stage 3-B 프롬프트 (Mermaid 렌더링)
   tests/                      # pytest 단위 테스트 (DB 캐시, IVC/Workflow 파이프라인, 스텁 동작)
 data/                         # 기본 SQLite 경로(data/ax_factory.db), AX_DB_PATH로 변경 가능
-docs/                         # 문서 세트(PRD, 아키텍처, 로직 플로우, 스키마 등)
+docs/                         # 문서 세트(PRD, 아키텍처, 로직 플로우, 스키마, doc_ops_guide 등)
 logs/                         # 로그 출력 디렉터리 (logging_config가 생성)
 prompts_reference/            # 참고용 기존 프롬프트 보관
 requirements.txt              # 의존성 목록(streamlit, pydantic, pytest, google-genai 등)

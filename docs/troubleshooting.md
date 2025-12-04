@@ -19,7 +19,7 @@
 - **버튼 반응 없음**: 회사명/직무명 필수. Stage 1은 Stage 0 결과가 DB/세션에 있어야 한다.
 - **task_atoms가 비어 있음**: LLM 스텁이 동작했거나 Stage 1 미실행. Stage 1 실행 시 파이프라인이 `task_atoms`를 Phase 결과에 다시 붙여서 UI에 노출한다.
 - **로그 중복/시끄러움**: `infra/logging_config.setup_logging`은 중복 호출을 방지하는 플래그를 가진다. Streamlit 재실행으로 로그 핸들러가 2중 등록되면 세션 재시작.
-- **탭에 결과 미표시**: 세션 키(`stage0_collect_result`, `stage0_summarize_result`, `stage1_task_result`, `stage1_phase_result`, `stage1_static_result`, `workflow_plan`, `workflow_mermaid`)가 비었을 수 있다. 버튼 재실행으로 채운다.
+- **탭에 결과 미표시**: 세션이 비어도 Stage 1/2 탭은 DB `job_tasks`/`job_task_edges`를 읽어 표시한다. 그래도 비어 있으면 해당 job_run에 저장된 데이터가 없는 것일 수 있으니 재실행하거나 job_run을 확인한다.
 
 ## 테스트/검증
 - 실행: `python -m pytest ax_agent_factory/tests`

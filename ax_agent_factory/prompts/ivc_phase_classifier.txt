@@ -127,6 +127,8 @@ IVCAtomicTask:
   ]
 }
 
+> 필수 규칙: 각 ivc_tasks[*].classification_reason을 반드시 1~2문장으로 채워야 하며, 비워두면 잘못된 응답으로 간주된다.
+
 [세부 규칙]
 - job_meta는 입력의 job_meta를 그대로 복사합니다.
 - raw_job_desc가 입력 JSON에 있다면 그대로 복사하고, 없다면 null을 넣습니다.

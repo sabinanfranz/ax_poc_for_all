@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 from ax_agent_factory.core import research
@@ -14,6 +15,8 @@ from ax_agent_factory.core.workflow import WorkflowMermaidRenderer, WorkflowStru
 from ax_agent_factory.models.job_run import JobResearchResult, JobRun
 from ax_agent_factory.models.stages import PIPELINE_STAGES, StageMeta
 from ax_agent_factory.infra import db
+
+logger = logging.getLogger(__name__)
 
 
 class PipelineManager:
@@ -120,7 +123,7 @@ class PipelineManager:
             raw_job_desc=job_research_result.raw_job_desc,
         )
         extractor = IVCTaskExtractor(llm_client=llm_client)
-        result = extractor.run(job_input)
+        result = extractor.run(job_input, job_run_id=job_run.id)
         try:
             db.save_task_atoms(job_run.id, result.task_atoms)
         except Exception:
@@ -152,7 +155,7 @@ class PipelineManager:
             task_atoms=task_extraction_result.task_atoms,
         )
         classifier = IVCPhaseClassifier(llm_client=llm_client)
-        result = classifier.run(classifier_input)
+        result = classifier.run(classifier_input, job_run_id=job_run.id)
         result.task_atoms = task_extraction_result.task_atoms
         try:
             db.apply_ivc_classification(job_run.id, result.ivc_tasks)
@@ -195,6 +198,7 @@ class PipelineManager:
         plan = planner.run(job_meta, ivc_payload, job_run_id=job_run.id)
         try:
             db.apply_workflow_plan(job_run.id, plan)
+            db.save_workflow_plan(job_run.id, plan)
         except Exception:
             logger.exception("Failed to persist workflow struct plan")
         return plan
@@ -204,6 +208,10 @@ class PipelineManager:
             raise ValueError("job_run is required for Stage 2.2 Workflow")
         renderer = WorkflowMermaidRenderer(llm_client=llm_client)
         mermaid = renderer.run(workflow_plan, job_run_id=job_run.id)
+        try:
+            db.save_workflow_mermaid_result(job_run.id, workflow_plan, mermaid)
+        except Exception:
+            logger.exception("Failed to persist workflow mermaid result")
         return mermaid
 
     def run_stage_3_workflow(self, *args, **kwargs):  # pragma: no cover - stub

@@ -623,6 +623,24 @@ def call_task_extractor(
             raise InvalidLLMJsonError("Failed to parse Task Extractor JSON", raw_text=raw_output, json_text=cleaned)
         parsed["_raw_text"] = raw_output
         parsed["_cleaned_json"] = cleaned
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_output,
+            output_json_parsed=json.dumps(parsed, ensure_ascii=False),
+            status="override",
+            error_type=None,
+            error_message=None,
+            latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
+        )
         return parsed
 
     raw_text = ""
@@ -765,6 +783,24 @@ def call_phase_classifier(
             raise InvalidLLMJsonError("Failed to parse Phase Classifier JSON", raw_text=raw_output, json_text=cleaned)
         parsed["_raw_text"] = raw_output
         parsed["_cleaned_json"] = cleaned
+        _safe_save_llm_log(
+            stage_name=stage_name,
+            job_run_id=job_run_id,
+            model_name=model or DEFAULT_GEMINI_MODEL,
+            prompt_version=prompt_version,
+            temperature=None,
+            top_p=None,
+            input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+            output_text_raw=raw_output,
+            output_json_parsed=json.dumps(parsed, ensure_ascii=False),
+            status="override",
+            error_type=None,
+            error_message=None,
+            latency_ms=_elapsed_ms(started),
+            tokens_prompt=usage["tokens_prompt"],
+            tokens_completion=usage["tokens_completion"],
+            tokens_total=usage["tokens_total"],
+        )
         return parsed
 
     raw_text = ""
@@ -1394,6 +1430,27 @@ def _generic_llm_json_call(
             raise InvalidLLMJsonError("Failed to parse JSON", raw_text=raw_output, json_text=cleaned)
         parsed["_raw_text"] = raw_output
         parsed["_cleaned_json"] = cleaned
+        try:
+            _safe_save_llm_log(
+                stage_name=stage_name,
+                job_run_id=job_run_id,
+                model_name=model or DEFAULT_GEMINI_MODEL,
+                prompt_version=prompt_version,
+                temperature=None,
+                top_p=None,
+                input_payload_json=json.dumps(input_payload, ensure_ascii=False),
+                output_text_raw=raw_output,
+                output_json_parsed=json.dumps(parsed, ensure_ascii=False),
+                status="override",
+                error_type=None,
+                error_message=None,
+                latency_ms=_elapsed_ms(started),
+                tokens_prompt=usage["tokens_prompt"],
+                tokens_completion=usage["tokens_completion"],
+                tokens_total=usage["tokens_total"],
+            )
+        except Exception:
+            logger.exception("Failed to log override llm_client call for %s", stage_name)
         return parsed
 
     # Stub fallback when SDK/key missing

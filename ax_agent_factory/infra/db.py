@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional
 
 from ax_agent_factory.core.schemas.common import IVCAtomicTask, IVCTask, TaskStaticMeta
-from ax_agent_factory.core.schemas.workflow import WorkflowPlan
+from ax_agent_factory.core.schemas.workflow import MermaidDiagram, WorkflowPlan
 from ax_agent_factory.models.job_run import JobResearchCollectResult, JobResearchResult, JobRun
 from ax_agent_factory.models.llm_log import LLMCallLog
 
@@ -186,6 +186,21 @@ def _ensure_tables() -> None:
     )
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_llm_call_logs_stage ON llm_call_logs (stage_name, created_at)"
+    )
+    # Workflow plan/mermaid persistence (Stage 2)
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS workflow_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_run_id INTEGER NOT NULL UNIQUE,
+            workflow_plan_json TEXT,
+            mermaid_code TEXT,
+            warnings_json TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(job_run_id) REFERENCES job_runs(id)
+        )
+        """
     )
     # AX extension tables (Stage 4~8)
     cur.execute(
@@ -778,6 +793,92 @@ def apply_workflow_plan(job_run_id: int, plan: WorkflowPlan) -> None:
 
     conn.commit()
     conn.close()
+
+
+def save_workflow_plan(job_run_id: int, plan: WorkflowPlan) -> None:
+    """Persist workflow plan JSON for reuse across sessions."""
+    conn = _get_conn()
+    cur = conn.cursor()
+    now = datetime.utcnow().isoformat()
+    plan_json = json.dumps(plan.model_dump(), ensure_ascii=False)
+    cur.execute(
+        """
+        INSERT INTO workflow_results (job_run_id, workflow_plan_json, created_at, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(job_run_id) DO UPDATE SET
+            workflow_plan_json = excluded.workflow_plan_json,
+            updated_at = excluded.updated_at
+        """,
+        (job_run_id, plan_json, now, now),
+    )
+    conn.commit()
+    conn.close()
+
+
+def save_workflow_mermaid_result(job_run_id: int, plan: WorkflowPlan | None, mermaid: MermaidDiagram) -> None:
+    """Persist mermaid_code and optional plan JSON."""
+    conn = _get_conn()
+    cur = conn.cursor()
+    now = datetime.utcnow().isoformat()
+    plan_json = json.dumps(plan.model_dump(), ensure_ascii=False) if plan is not None else None
+    warnings_json = json.dumps(mermaid.warnings, ensure_ascii=False) if mermaid.warnings is not None else None
+    cur.execute(
+        """
+        INSERT INTO workflow_results (job_run_id, workflow_plan_json, mermaid_code, warnings_json, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(job_run_id) DO UPDATE SET
+            workflow_plan_json = COALESCE(excluded.workflow_plan_json, workflow_results.workflow_plan_json),
+            mermaid_code = excluded.mermaid_code,
+            warnings_json = excluded.warnings_json,
+            updated_at = excluded.updated_at
+        """,
+        (job_run_id, plan_json, mermaid.mermaid_code, warnings_json, now, now),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_workflow_plan(job_run_id: int) -> WorkflowPlan | None:
+    """Fetch persisted workflow plan if available."""
+    conn = _get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT workflow_plan_json FROM workflow_results WHERE job_run_id = ?",
+        (job_run_id,),
+    )
+    row = cur.fetchone()
+    conn.close()
+    if not row or not row["workflow_plan_json"]:
+        return None
+    try:
+        data = json.loads(row["workflow_plan_json"])
+        return WorkflowPlan(**data)
+    except Exception:
+        return None
+
+
+def get_workflow_mermaid_result(job_run_id: int) -> MermaidDiagram | None:
+    """Fetch persisted MermaidDiagram if available."""
+    conn = _get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT workflow_plan_json, mermaid_code, warnings_json FROM workflow_results WHERE job_run_id = ?",
+        (job_run_id,),
+    )
+    row = cur.fetchone()
+    conn.close()
+    if not row or not row["mermaid_code"]:
+        return None
+    warnings = json.loads(row["warnings_json"]) if row["warnings_json"] else None
+    diagram = MermaidDiagram(workflow_name="", mermaid_code=row["mermaid_code"], warnings=warnings)
+    if row["workflow_plan_json"]:
+        try:
+            plan_dict = json.loads(row["workflow_plan_json"])
+            # carry workflow_name if present
+            diagram.workflow_name = plan_dict.get("workflow_name", diagram.workflow_name)
+        except Exception:
+            pass
+    return diagram
 
 
 def get_job_tasks(job_run_id: int) -> list[dict]:

@@ -15,6 +15,7 @@
 - `stage_runner.md` : Stage 공통 실행 패턴 정의
 - `gemini_models.md` : 현재 사용 모델과 연결 체크리스트
 - `iteration_log.md` : 변경 로그 표
+- `doc_ops_guide.md` : 모든 주요 md 최신화를 위한 운영 지침
 - `versions/prd_v1.1.md` : 과거 PRD 스냅샷
 - `uxui.md` : UI 탭/버튼/디버깅 노출 규칙
 - `database_tables.md` : SQLite/테이블/AX 확장 테이블 요약

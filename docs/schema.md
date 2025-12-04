@@ -8,8 +8,8 @@
 | 1.1 IVC Task Extractor | JobInput(job_meta, raw_job_desc) | TaskExtractionResult(task_atoms[], llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) |
 | 1.2 IVC Phase Classifier | IVCTaskListInput(job_meta, task_atoms) | PhaseClassificationResult(ivc_tasks[], phase_summary, task_atoms, llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) |
 | 1.3 Static Task Classifier | PhaseClassificationResult | StaticClassificationResult(task_static_meta[], static_summary, llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) |
-| 2.1 Workflow Struct | PhaseClassificationResult dict (+ optional task_static_meta, static_summary) | WorkflowPlan(stages, streams, nodes, edges, entry/exit_points, llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) |
-| 2.2 Workflow Mermaid | WorkflowPlan | MermaidDiagram(mermaid_code, warnings, llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) |
+| 2.1 Workflow Struct | PhaseClassificationResult dict (+ optional task_static_meta, static_summary) | WorkflowPlan(stages, streams, nodes, edges, entry/exit_points, llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) + DB(job_tasks/job_task_edges + workflow_results.workflow_plan_json) |
+| 2.2 Workflow Mermaid | WorkflowPlan | MermaidDiagram(mermaid_code, warnings, llm_raw_text/llm_error/llm_cleaned_json) | 구현(Gemini, 키 없으면 스텁) + DB(workflow_results.mermaid_code/warnings_json) |
 | 4. AX Workflow Architect | WorkflowPlan + job_meta (+ task cards 등) | AXWorkflowDesignResult | 설계(미구현) |
 | 5. Agent Architect | AXWorkflowDesignResult | AgentSpecsForPromptBuilder | 설계(미구현) |
 | 6-A Deep Skill Research | AgentSpecsForPromptBuilder/ax_agents | DeepSkillResearchResult | 설계(미구현) |
@@ -325,6 +325,16 @@
 | source_task_id | TEXT | 출발 task_id |
 | target_task_id | TEXT | 도착 task_id |
 | label | TEXT \| NULL | 엣지 라벨 |
+| created_at / updated_at | TEXT | ISO 시각 |
+
+### workflow_results
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | INTEGER PK | 내부 PK |
+| job_run_id | INTEGER UNIQUE | JobRun FK (run당 1행) |
+| workflow_plan_json | TEXT \| NULL | WorkflowPlan 전체 JSON |
+| mermaid_code | TEXT \| NULL | MermaidDiagram.mermaid_code |
+| warnings_json | TEXT \| NULL | MermaidDiagram.warnings JSON |
 | created_at / updated_at | TEXT | ISO 시각 |
 
 ## 8. AX 확장 스키마 (Stage 4~7, `core/schemas/ax.py` 제안)

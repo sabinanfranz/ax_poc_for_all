@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from typing import Optional
+from collections import Counter
 
 from ax_agent_factory.core.schemas.common import IVCAtomicTask, IVCTaskListInput, PhaseClassificationResult
 from ax_agent_factory.infra.llm_client import (
@@ -54,7 +55,19 @@ class IVCPhaseClassifier:
             logger.error("Phase Classifier JSON parsing error", exc_info=True)
             return self._stub_result(task_list_input)
         except ValidationError as exc:
-            logger.warning("Phase Classifier validation failed; returning stub", exc_info=False)
+            logger.warning("Phase Classifier validation failed; attempting payload repair", exc_info=False)
+            repaired = self._repair_payload(llm_output)
+            if repaired:
+                try:
+                    result = parse_phase_classification_dict(repaired)
+                    if hasattr(result, "llm_raw_text"):
+                        result.llm_raw_text = llm_output.get("_raw_text")  # type: ignore[attr-defined]
+                        result.llm_cleaned_json = llm_output.get("_cleaned_json")  # type: ignore[attr-defined]
+                        result.llm_error = llm_output.get("llm_error")  # type: ignore[attr-defined]
+                    logger.info("Phase Classifier parsing succeeded after repair. ivc_task_count=%d", len(result.ivc_tasks))
+                    return result
+                except ValidationError:
+                    logger.warning("Phase Classifier validation still failed after repair", exc_info=False)
             stub = self._stub_result(task_list_input)
             if hasattr(stub, "llm_error"):
                 stub.llm_error = str(exc)  # type: ignore[attr-defined]
@@ -102,8 +115,37 @@ class IVCPhaseClassifier:
             "ivc_tasks": ivc_tasks,
             "phase_summary": phase_summary,
             "task_atoms": [atom.dict() for atom in task_list_input.task_atoms],
+            "llm_error": "stub_fallback: missing or invalid classification_reason",
         }
         return PhaseClassificationResult(**stub_payload)
+
+    def _repair_payload(self, payload: dict) -> Optional[dict]:
+        """Best-effort fill missing classification_reason or phase_summary to avoid stub fallbacks."""
+        if not isinstance(payload, dict):
+            return None
+        repaired = dict(payload)
+        ivc_tasks = repaired.get("ivc_tasks")
+        missing_reason = False
+        if isinstance(ivc_tasks, list):
+            for task in ivc_tasks:
+                if task is None or not isinstance(task, dict):
+                    continue
+                task.setdefault("classification_reason", "LLM missing classification_reason")
+                task.setdefault("ivc_phase", "P1_SENSE")
+                task.setdefault("primitive_lv1", task.get("primitive_lv1") or "SENSE")
+                if task.get("classification_reason") == "LLM missing classification_reason":
+                    missing_reason = True
+        # Rebuild phase_summary if missing or empty
+        summary = repaired.get("phase_summary") or {}
+        if not summary and isinstance(ivc_tasks, list):
+            counter: Counter[str] = Counter()
+            for task in ivc_tasks:
+                if isinstance(task, dict) and task.get("ivc_phase"):
+                    counter[task["ivc_phase"]] += 1
+            repaired["phase_summary"] = {phase: {"count": count} for phase, count in counter.items()}
+        if missing_reason and not repaired.get("llm_error"):
+            repaired["llm_error"] = "missing classification_reason"
+        return repaired
 
 
 def parse_phase_classification_dict(payload: dict) -> PhaseClassificationResult:

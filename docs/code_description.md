@@ -2,7 +2,7 @@
 > Last updated: 2025-12-04 (by AX Agent Factory Codex)
 
 ## UI
-- `ax_agent_factory/app.py`: Streamlit 진입점. 사이드바 입력/버튼(0/1/1.3/2, “다음 단계 실행”) → `PipelineManager` 호출 → Stage별 탭 렌더링(Stage 0.1/0.2, 1.1/1.2/1.3, 2.1/2.2) 및 로그 expander 출력.
+- `ax_agent_factory/app.py`: Streamlit 진입점. 사이드바 입력/버튼(0/1/1.3/2, “다음 단계 실행”) → `PipelineManager` 호출 → Stage별 탭 렌더링(Stage 0.1/0.2, 1.1/1.2/1.3, 2.1/2.2) 및 로그 expander 출력. 세션이 비었을 때 Stage 2는 `workflow_results`/LLM 로그 폴백으로 plan/mermaid를 복원.
 
 ## Core – Pipeline & Research
 - `core/pipeline_manager.py`: JobRun 생성(`create_or_get_job_run`) 및 Stage 실행기(`run_stage_0_*`, `run_stage_1_*`, `run_stage_2_*`, `run_pipeline_until_stage`). Stage 0는 DB 캐시 후 재사용, Stage 1/2는 입력 검증 후 하위 파이프라인 호출 및 job_tasks/job_task_edges 업데이트.
@@ -25,8 +25,8 @@
 - `core/schemas/workflow.py`: WorkflowPlan/WorkflowStage/WorkflowStream/WorkflowNode/WorkflowEdge 및 MermaidDiagram 모델(LLM 디버그 필드 포함).
 
 ## Infra
-- `infra/db.py`: SQLite 경로 설정(`set_db_path`), 테이블 보장, CRUD(`create_or_get_job_run`, Stage 0 저장/조회, job_tasks/job_task_edges upsert), LLM 로그 저장/조회. legacy 컬럼(raw_sources/research_sources) 호환.
-- `infra/llm_client.py`: Stage별 Gemini 호출/파서/스텁. `call_job_research_collect|summarize`, `call_task_extractor`, `call_phase_classifier`, `call_static_task_classifier`, `call_workflow_struct`, `call_workflow_mermaid`가 공통 sanitizer/JSON 정규화(`_extract_json_from_text`, `_parse_json_candidates`)와 스텁(`_stub_*`), 기본 `max_tokens=81920`을 사용. `_safe_save_llm_log`로 LLM 호출 메타 저장, `InvalidLLMJsonError` 정의.
+- `infra/db.py`: SQLite 경로 설정(`set_db_path`), 테이블 보장, CRUD(`create_or_get_job_run`, Stage 0 저장/조회, job_tasks/job_task_edges upsert), LLM 로그 저장/조회, WorkflowPlan/Mermaid 캐시 테이블(`workflow_results`) 저장/조회. legacy 컬럼(raw_sources/research_sources) 호환.
+- `infra/llm_client.py`: Stage별 Gemini 호출/파서/스텁. `call_job_research_collect|summarize`, `call_task_extractor`, `call_phase_classifier`, `call_static_task_classifier`, `call_workflow_struct`, `call_workflow_mermaid`가 공통 sanitizer/JSON 정규화(`_extract_json_from_text`, `_parse_json_candidates`)와 스텁(`_stub_*`), 기본 `max_tokens=81920`을 사용. `_safe_save_llm_log`로 LLM 호출 메타 저장, `InvalidLLMJsonError` 정의. override(Fake LLM) 경로도 로그 기록.
 - `infra/prompts.py`: `load_prompt`로 프롬프트 파일을 LRU 캐시 후 로드.
 - `infra/logging_config.py`: `setup_logging`이 콘솔/회전 파일 핸들러 설정(중복 방지 플래그).
 

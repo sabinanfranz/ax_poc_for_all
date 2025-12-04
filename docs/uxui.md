@@ -15,7 +15,7 @@
 
 - **0.1 Collect**: Input(job_run/manual_jd), 결과 raw_sources, LLM 디버그.
 - **0.2 Summarize**: Input(job_meta/raw_sources/manual_jd), 결과 raw_job_desc + research_sources, LLM 디버그.
-- **1.1 Task Extractor**: Input(job_meta/raw_job_desc), 결과 task_atoms, LLM 디버그.
+- **1.1 Task Extractor**: Input(job_meta/raw_job_desc + industry_context/business_goal 포함), 결과 task_atoms, LLM 디버그.
 - **1.2 Phase Classifier**: Input(job_meta/task_atoms), 결과 ivc_tasks + phase_summary, LLM 디버그.
 - **1.3 Static Task Classifier**: Input(PhaseClassificationResult dict), 결과 task_static_meta + static_summary, LLM 디버그.
 - **2.1 Workflow Struct**: Input(job_meta + ivc_tasks/task_atoms/phase_summary), 결과 stages/streams/nodes/edges/entry/exit/hub, LLM 디버그.
@@ -35,3 +35,9 @@
 - 모든 Stage 결과에 `llm_raw_text`, `llm_cleaned_json`, `llm_error`가 붙어 탭에 그대로 노출.
 - `logs/app.log`를 하단 expander에서 tail로 확인.
 - DB `llm_call_logs`에 stage_name/status/latency_ms/tokens 기록. 필요 시 sqlite로 조회 가능.
+
+## 세션/DB 캐시 동작
+- Stage 0 탭: 세션에 없으면 DB `job_research_*`에서 자동 로드.
+- Stage 1.1/1.2/1.3 탭: 세션이 비어도 DB `job_tasks`에 저장된 task_atoms/ivc_tasks/static_meta를 불러와 표시한다.
+- Stage 2.1 탭: 세션 plan이 없을 때도 `job_tasks`/`job_task_edges` DB 내용을 함께 보여 준다.
+- LLM raw/clean/error는 세션 결과가 있을 때만 노출(스텁/DB 캐시만 있으면 비어 있을 수 있음).
